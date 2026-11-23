@@ -1,8 +1,0 @@
-
-ai.adapt.app.LearnerJourneyTest:.
-
-Time: 11.556
-
-OK (1 test)
-
-
