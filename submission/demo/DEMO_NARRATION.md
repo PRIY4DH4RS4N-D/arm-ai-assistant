@@ -1,5 +1,7 @@
 # Aurora demo narration
 
+This narration is a companion script for the silent device recording. The correct raw sizes for the recorded Tutor question are 1,000 bytes in INT8 and 4,000 bytes in FP32.
+
 **0:00** Aurora is our PS4 learning assistant for an ARM Android phone. It helps a learner choose a goal, practise and decide what to study next.
 
 **0:10** This is Home. I can type a question or use the phone’s offline speech recognition if it is available.

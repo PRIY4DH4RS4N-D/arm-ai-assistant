@@ -11,4 +11,4 @@
 | 1:45–1:55 | Show Progress and the revision queue. |
 | 1:55–2:00 | Return to Home and summarize the verified Android, ExecuTorch and learning results. |
 
-Recording is pending a physical ARM64 phone and a successful live response.
+The [published footage](../submission/demo/ADAPT_AI_PS4_Demo_120s.mp4) joins real takes from the RMX5116. It shows the offline microphone state, model setup, Journey, live Tutor output, a scored practice answer and the updated recommendation. The recorded model answer contains an arithmetic error. For 1,000 weights, the raw payload sizes are 1,000 bytes in INT8 and 4,000 bytes in FP32.

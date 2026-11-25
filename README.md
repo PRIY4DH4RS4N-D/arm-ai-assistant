@@ -26,7 +26,7 @@ Native Kotlin and Jetpack Compose provide the five destinations. The Tutor uses 
 - [Two-minute phone demo script](docs/DEMO_SCRIPT_120S.md) and [recording checklist](submission/demo/RECORDING_CHECKLIST.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) and [release notes](docs/RELEASE_NOTES.md)
 
-Phone screenshots and recording are pending a connected ARM Android device and successful model validation.
+On-device evidence from realme P4 Pro 5G, Android 16: [two-minute demo](submission/demo/ADAPT_AI_PS4_Demo_120s.mp4), [Aurora Home](submission/screenshots/aurora-home.png), [Journey](submission/screenshots/learning-journey.png), and [offline Tutor](submission/screenshots/offline-tutor.png).
 
 ## Sources and notices
 

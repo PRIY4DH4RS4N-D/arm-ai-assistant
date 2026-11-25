@@ -72,7 +72,7 @@ Host checks compile the debug app, run the unit tests, assemble instrumentation 
 
 ### Demonstration and submission
 
-The [two-minute demo script](DEMO_SCRIPT_120S.md) covers Home, learner profile, Journey, live offline Tutor, a scored practice answer and revision. Phone screenshots and recording await successful physical acceptance, as documented in the [recording checklist](../submission/demo/RECORDING_CHECKLIST.md).
+The [two-minute demo script](DEMO_SCRIPT_120S.md) covers Home, learner profile, Journey, live offline Tutor, a scored practice answer and revision. The [physical phone recording](../submission/demo/ADAPT_AI_PS4_Demo_120s.mp4) and [screenshot evidence](../submission/README.md) were captured from the realme RMX5116 while offline. The live answer demonstrates the runtime and also documents a model arithmetic error. See the [recording checklist](../submission/demo/RECORDING_CHECKLIST.md).
 
 ### Limitations and next steps
 
