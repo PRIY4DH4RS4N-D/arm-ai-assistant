@@ -21,4 +21,4 @@ The previous PS4 take and its capture notes appear below.
 | 1:45–1:55 | Show Progress and the revision queue. |
 | 1:55–2:00 | Return to Home and summarize the verified Android, ExecuTorch and learning results. |
 
-The [published footage](../submission/demo/ADAPT_AI_PS4_Demo_120s.mp4) joins real takes from the RMX5116. It shows the offline microphone state, model setup, Journey, live Tutor output, a scored practice answer and the updated recommendation. The recorded model answer contains an arithmetic error. For 1,000 weights, the raw payload sizes are 1,000 bytes in INT8 and 4,000 bytes in FP32.
+The [previously published footage](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/blob/0fe98a47377dc54f625a5ce67cf98d69e175330e/submission/demo/ADAPT_AI_PS4_Demo_120s.mp4) joins real takes from the RMX5116. It shows the offline microphone state, model setup, Journey, live Tutor output, a scored practice answer and the updated recommendation. The recorded model answer contains an arithmetic error. For 1,000 weights, the raw payload sizes are 1,000 bytes in INT8 and 4,000 bytes in FP32.

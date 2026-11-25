@@ -1,19 +1,17 @@
 # Aurora demo narration
 
-This narration is a companion script for the silent device recording. The correct raw sizes for the recorded Tutor question are 1,000 bytes in INT8 and 4,000 bytes in FP32.
+This is a companion script for the silent phone recording.
 
-**0:00** Aurora is our PS4 learning assistant for an ARM Android phone. It helps a learner choose a goal, practise and decide what to study next.
+**0:00** Aurora is an offline personal learning assistant. The Home screen remembers the current learner and topic.
 
-**0:10** This is Home. I can type a question or use the phone’s offline speech recognition if it is available.
+**0:10** Each local learner has a separate profile, notes, quiz evidence and Tutor history.
 
-**0:25** Our demo profile has an Edge AI goal and a daily time budget. Aurora uses these preferences to build the learning journey.
+**0:27** The offline subject browser includes Mathematics, languages, engineering and other interests. We open Algebra.
 
-**0:42** This is the active milestone. The review recommendation shows the topic and the scored attempts that led to it.
+**0:43** The study plan uses the learner?s saved goal and 25-minute daily budget. A review is scheduled from quiz evidence.
 
-**1:00** Airplane mode is on. I’m asking about INT8 weights. The answer appearing here comes from the Llama model running through ExecuTorch on the phone.
+**0:53** In airplane mode, the installed Llama model explains how to isolate a variable through the normal Tutor screen.
 
-**1:27** I’m submitting a practice answer. The app checks the answer and updates the topic record. The Tutor does not assign the score.
+**1:17** Practice asks the same model to generate an equation. The app independently solves it to construct validated options.
 
-**1:45** The revision queue shows what I can revisit next.
-
-**1:55** Aurora combines an on-device tutor with a learning pathway that adapts to practice.
+**Closing** Kotlin scores the submitted choice. Progress shows the assessment and the resulting revision recommendation.

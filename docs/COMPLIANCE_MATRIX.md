@@ -46,12 +46,13 @@
 | Guest, rename and confirmed deletion | PARTIAL | Implemented. Full interaction tests pending |
 | Profile isolation | PASS | On-device Room instrumentation verified independent profiles and topic conversations |
 | Subject discovery and nested concept search | PASS | Offline catalog rendered on RMX5116. JVM tests verify search and unique IDs |
-| Multi-select and custom subjects/topics | PARTIAL | Implemented with persisted interests and custom hierarchy. Full device tests pending |
-| Goal, baseline and schedule | PARTIAL | Editable goals and preferences, separate diagnostic records and bounded weekly plan. Broad scenario checks pending |
-| Generated lessons | PARTIAL | Uses real ExecuTorch. Cross-domain quality and rendering coverage pending |
+| Multi-select and custom subjects/topics | PARTIAL | Custom subject and topic saved on RMX5116. Full multi-select interaction coverage pending |
+| Goal, baseline and schedule | PARTIAL | Saved Algebra goal, beginner preference and bounded weekly plan verified. Full diagnostic scenario coverage pending |
+| Generated lessons | PARTIAL | Generated, opened and completed the Algebra lesson offline. Cross-domain quality and rendering coverage pending |
 | Generated Algebra quiz | PASS | RMX5116 generated an equation offline, created valid answer choices and accepted the submitted answer |
 | Generated quizzes across all topics | PARTIAL | Model JSON validation implemented. Broad reliability unverified |
 | Quiz validation and scoring | PASS | JVM tests and physical Algebra scoring |
 | Mastery, mistake notebook and revision | PARTIAL | Weighted scoring, exclusions and intervals implemented. Longitudinal validation pending |
 | Local notes and personalized Tutor | PARTIAL | Notes import and bounded topic context implemented. Cross-topic voice and language tests pending |
 | Physical platform APK | PASS | Upgrade installed on RMX5116, preserving the existing learner and installed model |
+| Updated platform demo | PASS | Physical capture decoded end to end and shows the offline Algebra journey, model generation and scoring |

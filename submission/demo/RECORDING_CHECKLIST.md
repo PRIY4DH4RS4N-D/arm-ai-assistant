@@ -9,4 +9,4 @@
 
 ## Published capture
 
-Recorded on 25 November 2026 from realme RMX5116 with Android 16 in airplane mode. The H.264 MP4 joins two screen captures from the same phone and build. It runs 119.67 seconds at 720 × 1576 and decoded end to end with FFmpeg. The practice segment shows an actual correct answer and Journey changing from 0 of 1 to 1 of 2 attempts correct. The clip is silent. See the [media and APK checksums](../SHA256SUMS.txt).
+Recorded on 25 November 2026 from realme RMX5116, Android 16, with airplane mode enabled and Wi-Fi and mobile data disabled. The silent H.264 MP4 is 120.00 seconds at 720 ? 1576. Approximately 13 seconds hold the final progress frame to fill the recording window. FFmpeg decoded the complete file. The scenario shows a real profile selection, Algebra study plan, streamed Tutor response, model-generated equation, answer submission, and evidence-based progress. See the [media and APK checksums](../SHA256SUMS.txt).
