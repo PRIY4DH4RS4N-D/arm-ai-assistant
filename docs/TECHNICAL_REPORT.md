@@ -3,7 +3,7 @@
 
 ### Executive summary
 
-Aurora connects a local learning roadmap, lesson content, deterministic assessment and review to a five-mode Android tutor. The tutor uses the pinned ExecuTorch Android LLM API and a separately installed Llama bundle. The current delivery has host-verified model artifacts. Physical-device acceptance, including native generation, remains open.
+Aurora connects a local learning roadmap, lesson content, deterministic assessment and review to a five-mode Android tutor. The tutor uses the pinned ExecuTorch Android LLM API and a separately installed Llama bundle. On a realme P4 Pro 5G (RMX5116), the delivered APK loaded the verified model and streamed a Tutor response with airplane mode enabled and both Wi-Fi and mobile data disabled.
 
 ### Problem statement and analysis
 
@@ -64,11 +64,11 @@ The redesigned source retains application-private JSON, an asynchronous write co
 
 ### Hardware and performance
 
-The app reports Android version, model, ABI, storage and available memory. ADB listed zero connected devices during this delivery. Startup, model load, TTFT, token throughput, memory, frame timing, thermal behaviour and battery measurements are **NOT MEASURED**. The [benchmark protocol](PERFORMANCE_BENCHMARK.md) specifies fixed prompts, sampling and evidence requirements.
+The physical RMX5116 ran Android 16 (API 36), ARM64, with an SM7750 SoC and a 1280 ? 2800 display. The first measured offline Teach Me request used 116 prompt tokens and generated 74 tokens. ExecuTorch reported 0.678 s to the first token, 14.018 generated tokens/s and 1,941.99 MiB RSS after prefill. The fixed APK?s initial cold launch took 1.474 s. The native runner was warm for the first prompt; this sample did not measure cold model loading. See the [benchmark results and protocol](PERFORMANCE_BENCHMARK.md).
 
 ### Testing and physical deployment
 
-Host checks compile the debug app, run the unit tests, assemble instrumentation APKs and run lint. Artifact integrity uses independent SHA-256, size and tokenizer checks. Android deployment, renderer screenshots, real generation, repeated five-mode responses and restart/airplane-mode checks require the physical device. See [test report](TEST_REPORT.md), [offline verification](OFFLINE_VERIFICATION.md) and [deployment](BUILD_AND_DEPLOY.md).
+Host checks compile the debug app, run the unit tests, assemble instrumentation APKs and run lint. Artifact integrity uses independent SHA-256, size and tokenizer checks. The fixed build installed on the physical phone. The first recorded offline run verified model activation, text streaming, learner name restoration and a scored attempt that changed the Journey recommendation. See [test report](TEST_REPORT.md), [offline verification](OFFLINE_VERIFICATION.md) and [deployment](BUILD_AND_DEPLOY.md).
 
 ### Demonstration and submission
 
@@ -76,7 +76,7 @@ The [two-minute demo script](DEMO_SCRIPT_120S.md) covers Home, learner profile, 
 
 ### Limitations and next steps
 
-Expand authored content and question coverage across domains, validate publisher artifact compatibility, migrate earlier Room data if required, and evaluate mastery/review heuristics on representative learning histories. Connect an ARM64 phone to validate model generation, device metrics and speech. See [known limitations](KNOWN_LIMITATIONS.md).
+Expand authored content and question coverage across domains, migrate earlier Room data if required, and evaluate mastery/review heuristics on representative learning histories. The first model answer correctly compared weight width but made an incorrect generalization about numeric range. Further evaluation should cover response accuracy, sustained performance and offline speech transcription. See [known limitations](KNOWN_LIMITATIONS.md).
 
 ### Reproducibility and references
 
@@ -90,4 +90,4 @@ The [build guide](BUILD_AND_DEPLOY.md) pins the Android toolchain through the pr
 
 ### Conclusion
 
-Aurora connects learning goals, local curricula, evidence from practice and a separately provisioned local tutor. A complete PS4 demonstration requires validating that path end to end on the intended phone.
+Aurora connects learning goals, local curricula, scored practice and on-device tutoring. The RMX5116 run verified that the local Llama model generates through the application?s normal Tutor in airplane mode.

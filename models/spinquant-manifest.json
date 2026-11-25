@@ -25,6 +25,6 @@
     "exportDate": null,
     "applicationSequenceLimit": 1024,
     "exportConfiguration": "SpinQuant INT4 weights, EO8, XNNPACK",
-    "verification": "Local model and tokenizer SHA-256 matched. ExecuTorch 1.0.0 native compatibility pending Android validation."
+    "verification": "Local hashes matched the publisher. Verified model load and offline Tutor generation on realme RMX5116, Android 16 ARM64, with ExecuTorch 1.0.0."
   }
 }

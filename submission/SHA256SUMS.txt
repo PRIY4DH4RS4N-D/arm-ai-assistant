@@ -1,1 +1,1 @@
-8b805e700a97f900f269ab5fed0de6f6a4cb7fcfa94a9dda4c098c05dd16feb0  ADAPT-AI-debug.apk
+af5725d98073df831ebfc7fb0b49851ebe2f362c40cf5afb3de69c3ac8b40762  ADAPT-AI-debug.apk

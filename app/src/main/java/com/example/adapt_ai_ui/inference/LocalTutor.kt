@@ -80,10 +80,12 @@ class LocalTutor(context: Context) {
             }
         }
     }
+    // This 1.0.0 overload omits the auxiliary weight file for a self-contained PTE.
     private fun createModule(installed: InstalledModel): LlmModule = LlmModule(
-        LlmModuleConfig.create().modulePath(java.io.File(installed.folder,"model.pte").absolutePath)
-            .tokenizerPath(java.io.File(installed.folder,"tokenizer.model").absolutePath)
-            .temperature(0.3f).modelType(LlmModuleConfig.MODEL_TYPE_TEXT).build())
+        java.io.File(installed.folder, "model.pte").absolutePath,
+        java.io.File(installed.folder, "tokenizer.model").absolutePath,
+        0.3f
+    )
     fun generate(prompt: String): Flow<TutorEvent> = callbackFlow {
         require(prompt.toByteArray(Charsets.UTF_8).size<=1600)
         val run=Any()

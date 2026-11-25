@@ -1,15 +1,17 @@
 # ARM performance benchmark
 
-**Result on this build** NOT MEASURED. ADB did not detect a physical phone on 25 November 2026.
+Physical realme P4 Pro 5G (RMX5116), Android 16, ARM64, SM7750, measured on 25 November 2026. The device had 11,512,612 KiB of total RAM and a 1280 × 2800 display. Network state was airplane mode on, Wi-Fi off and mobile data off. The model is the [verified Llama 3.2 1B Instruct SpinQuant PTE](../models/spinquant-manifest.json). APK identity is in [SHA256SUMS](../submission/SHA256SUMS.txt).
 
-| Measure | Method | Result |
-| --- | --- | --- |
-| Cold app launch | Force-stop; run `adb shell am start -W -n com.example.adapt_ai_ui/.MainActivity` five times | NOT MEASURED |
-| Model load | Measure elapsed time around `LlmModule.load()`, after checksum verification | NOT MEASURED |
-| Time to first token | Time from the native generation call to the first non-empty callback | NOT MEASURED |
-| Generation throughput | Use tokenizer-aware counts and native decode timings, leaving prompt/prefill out of the calculation | NOT MEASURED |
-| Peak process memory | Sample `adb shell dumpsys meminfo com.example.adapt_ai_ui` during the run | NOT MEASURED |
-| UI frame timing | Reset and capture `adb shell dumpsys gfxinfo com.example.adapt_ai_ui framestats` around a response | NOT MEASURED |
-| Thermal and battery | Record `dumpsys thermalservice` and `dumpsys battery` before and after a fixed 15-minute run | NOT MEASURED |
+| Measure | Observed |
+| --- | --- |
+| Initial cold app launch after installing the corrected APK | 1.474 s reported by Activity Manager |
+| Teach Me prompt and response length | 116 prompt tokens, 74 generated |
+| Native time to first token | 0.678 s |
+| Native generation throughput | 14.018 generated tokens/s over 5.279 s |
+| End-to-end native inference | 5.957 s |
+| RSS after model loading, prompt prefill and generation | 1,941.99 MiB at each reported sample |
+| PSS and RSS after the measured request | 1,717,196 KiB PSS and 1,869,968 KiB RSS from `dumpsys meminfo` |
+| Thermal status | Android status 0 at the spot check |
+| Cold model loading, peak memory, sustained thermals, frame timing and battery drain | Pending controlled measurements |
 
-Run in airplane mode at a stable battery level and screen brightness. Use Teach Me with “Explain why INT8 weights use less storage than FP32”, Socratic with “Help me reason about quantization error”, and Debug & Code with a fixed benign arithmetic example. Run each five times and record device model, Android version, model and APK hashes, runtime version, elapsed time, warm/cold status, and any failed or cancelled runs. Export only anonymized measurements. The engine captures elapsed time, first callback latency and native stats through its completion event.
+These are individual on-device observations. The measured Teach Me prompt ran after model activation. For a repeatable comparison, keep brightness and battery level stable, separate cold and warm runs, and repeat each fixed prompt at least five times. Capture native token counts, prefill/decode durations, memory samples and failure counts.

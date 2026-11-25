@@ -7,4 +7,5 @@
 - Added private transactional model import with checksum and size checks, native load validation, status, unload and confirmed deletion.
 - Added a daily time plan and practice recommendations based on scored attempts. Fresh installations start with unassessed topic statistics.
 - Fixed a persistence flush race when asynchronous writes complete during the job snapshot.
+- Fixed the native loader on Android by using the ExecuTorch 1.0.0 text-only constructor for a self-contained PTE.
 - Added model packaging, validation and submission documentation. See the [test report](TEST_REPORT.md) for current evidence.
