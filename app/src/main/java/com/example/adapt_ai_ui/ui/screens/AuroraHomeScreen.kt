@@ -16,6 +16,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -46,6 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -56,11 +59,10 @@ import com.example.adapt_ai_ui.data.PracticeMode
 import com.example.adapt_ai_ui.data.platform.LocalLearningPlatform
 import com.example.adapt_ai_ui.data.SampleData
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
+import com.example.adapt_ai_ui.data.TutorMode
 import com.example.adapt_ai_ui.data.TutorRepository
 import com.example.adapt_ai_ui.inference.ModelState
-import com.example.adapt_ai_ui.ui.components.AdaptIcons
-import com.example.adapt_ai_ui.ui.components.AuroraOrb
-import com.example.adapt_ai_ui.ui.components.OrbState
+import com.example.adapt_ai_ui.ui.components.*
 import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import java.util.UUID
 import kotlinx.coroutines.delay
@@ -83,7 +85,7 @@ fun HomeScreen(
             TextButton(
                 onClick = { overview = false },
                 modifier = Modifier.statusBarsPadding().padding(horizontal = 12.dp)
-            ) { Text("Back to Aurora") }
+            ) { Text("Back to Ember") }
             LearningOverviewScreen(
                 onNavigateToPathway, onNavigateToLesson, onNavigateToPractice,
                 onNavigateToTutor, onNavigateToProfile, onNavigateToExplore,
@@ -96,11 +98,6 @@ fun HomeScreen(
     val learner = SampleData.learnerProfile
     val session = LocalLearningPlatform.current?.session
     val keyboard = LocalSoftwareKeyboardController.current
-    val dark = AdaptTheme.isDark
-    val backdrop = if (dark) Color(0xFF02040A) else Color(0xFFF8FAFF)
-    val ink = if (dark) Color(0xFFF5F7FB) else Color(0xFF15223C)
-    val muted = if (dark) Color(0xFFA5AFBE) else Color(0xFF465572)
-    val blue = if (dark) Color(0xFF75DFFF) else Color(0xFF254CC0)
     var text by rememberSaveable { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
     val voice = rememberAuroraVoice { text = it }
@@ -112,14 +109,12 @@ fun HomeScreen(
     }
     val activityState = when {
         voice.listening -> OrbState.LISTENING
-        state == ModelState.GENERATING -> OrbState.THINKING
+        state == ModelState.GENERATING -> OrbState.GENERATING
         state in setOf(ModelState.LOADING, ModelState.IMPORTING, ModelState.VERIFYING) -> OrbState.LOADING
         state == ModelState.ERROR -> OrbState.ERROR
         celebrating -> OrbState.SUCCESS
         else -> OrbState.IDLE
     }
-    val inputPadding by animateDpAsState(if (focused) 10.dp else 5.dp, label = "Input focus")
-    val capsule = RoundedCornerShape(32.dp)
     fun send() {
         val query = text.trim()
         if (query.isEmpty()) return
@@ -129,109 +124,153 @@ fun HomeScreen(
         onNavigateToTutor(TutorQuickPrompt(UUID.randomUUID().toString(), query, "Home"))
     }
 
-    BoxWithConstraints(
-        modifier.fillMaxSize().background(backdrop).statusBarsPadding()
-    ) {
-        val artworkSize = (maxHeight * 0.36f).coerceIn(128.dp, 285.dp)
-        val compact = maxHeight < 425.dp
-        Box(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(240.dp).background(
-                Brush.verticalGradient(listOf(Color.Transparent, Color(0xFF1353D6).copy(alpha = if (dark) 0.24f else 0.11f),
-                    Color(0xFF36AFFF).copy(alpha = if (dark) 0.34f else 0.18f)))
-            )
-        )
-        Column(Modifier.fillMaxSize().padding(horizontal = 22.dp)) {
-            Row(
-                Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("ADAPT-AI", color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Row(
-                    Modifier.clip(CircleShape).clickable(onClick = onNavigateToProfile).padding(9.dp),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(Modifier.size(6.dp).background(blue, CircleShape))
-                    Text(state.label, color = muted, fontSize = 11.sp)
-                }
-            }
+    BoxWithConstraints(modifier.fillMaxSize().statusBarsPadding()) {
+        val orbSize = (maxHeight * .32f).coerceIn(144.dp, 254.dp)
+        val topic = session?.topic
+        val target = session?.preferences?.minutes ?: learner.dailyMinutesGoal
+        val studied = if (topic == null) learner.dailyMinutesSpent else 0
+        AuroraScene(Modifier.fillMaxSize()) {
             Column(
-                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                Modifier.align(Alignment.TopCenter).widthIn(max = 540.dp).fillMaxSize()
+                    .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (!compact) AuroraOrb(activityState, { voice.amplitude }, Modifier.size(artworkSize).clickable { onNavigateToTutor(null) }.semantics { contentDescription = "Open Tutor" })
-                Text("Hello, ${session?.profile?.name ?: learner.name}", color = blue, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                Text(
-                    "What would you like to learn today?",
-                    modifier = Modifier.padding(top = 9.dp).widthIn(max = 390.dp),
-                    color = ink, textAlign = TextAlign.Center, fontSize = if (compact) 24.sp else 32.sp,
-                    lineHeight = if (compact) 29.sp else 38.sp, fontWeight = FontWeight.SemiBold
-                )
-            }
-            voice.status?.let {
-                Text(it, color = muted, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), fontSize = 12.sp)
-            }
-            Row(
-                Modifier.fillMaxWidth().clip(capsule)
-                    .background(if (dark) Color(0xC7152342) else Color(0xF5FFFFFF))
-                    .border(1.dp, blue.copy(alpha = 0.36f), capsule)
-                    .padding(start = 18.dp, end = 5.dp, top = inputPadding, bottom = inputPadding),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    modifier = Modifier.weight(1f).onFocusChanged { focused = it.isFocused }
-                        .semantics { contentDescription = "Ask anything" },
-                    textStyle = AdaptTheme.typography.bodyLarge.copy(color = ink),
-                    cursorBrush = SolidColor(blue), singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(onSend = { send() }),
-                    decorationBox = { inner ->
-                        Box {
-                            if (text.isEmpty()) Text("Ask anything...", color = muted, style = AdaptTheme.typography.bodyLarge)
-                            inner()
-                        }
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.clip(CircleShape).background(auroraPanel)
+                            .clickable(onClick = onNavigateToProfile).padding(horizontal = 12.dp, vertical = 11.dp),
+                        horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val ready = state == ModelState.INSTALLED || state == ModelState.READY
+                        Box(Modifier.size(7.dp).background(if (ready) AuroraGreen else auroraAccent, CircleShape))
+                        Text(if (ready) "Offline mode" else state.label, color = AdaptTheme.colors.textPrimary,
+                            style = AdaptTheme.typography.labelSmall)
                     }
-                )
-                IconButton(onClick = voice.toggle) {
-                    Canvas(Modifier.size(23.dp).semantics {
-                        contentDescription = if (voice.listening) "Stop listening" else "Start offline voice input"
-                    }) {
-                        listOf(0.23f, 0.55f, 0.86f, 0.45f, 0.28f).forEachIndexed { i, height ->
-                            val x = size.width * (0.14f + i * 0.18f)
-                            drawLine(blue, Offset(x, size.height * (1 - height) / 2),
-                                Offset(x, size.height * (1 + height) / 2), 2.dp.toPx(), StrokeCap.Round)
+                    IconButton(onClick = onNavigateToProfile) {
+                        Box(contentAlignment = Alignment.Center) {
+                            AuroraMedallion(AdaptIcons.Profile, AuroraViolet, Modifier.size(39.dp))
+                            Spacer(Modifier.size(44.dp).semantics { contentDescription = "Open learner profile" })
                         }
                     }
                 }
-                IconButton(onClick = ::send, enabled = text.isNotBlank()) {
-                    Icon(AdaptIcons.ArrowForward, "Send to Aurora", tint = if (text.isBlank()) muted else blue)
+                AuroraOrb(activityState, { voice.amplitude }, Modifier.size(orbSize)
+                    .clickable(onClick = { onNavigateToTutor(null) }).semantics { contentDescription = "Open Tutor" })
+                Text("Hello, ${session?.profile?.name ?: learner.name}", color = AdaptTheme.colors.textPrimary,
+                    fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                Text("How can I help you learn today?", Modifier.padding(top = 5.dp, bottom = 15.dp),
+                    color = AdaptTheme.colors.textPrimary, textAlign = TextAlign.Center,
+                    fontSize = 25.sp, lineHeight = 29.sp, fontWeight = FontWeight.SemiBold)
+                AuroraComposer(text, { text = it }, "Ask anything...", voice, ::send,
+                    Modifier.fillMaxWidth(), sendDescription = "Send to Aurora")
+                Row(Modifier.fillMaxWidth().padding(top = 12.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    AuroraPill("Teach Me", {
+                        if (!TutorRepository.isGenerating && TutorRepository.activeMode != TutorMode.TEACH_ME) {
+                            TutorRepository.setMode(TutorMode.TEACH_ME, session?.profile?.name ?: learner.name,
+                                topic?.subject ?: learner.activeDomainTitle, topic?.name ?: SampleData.currentModule.title)
+                        }
+                        onNavigateToTutor(null)
+                    }, horizontalPadding = 9.dp)
+                    AuroraPill("Practice", { onNavigateToPractice(PracticeMode.SESSION) }, horizontalPadding = 9.dp)
+                    AuroraPill("My progress", onNavigateToProgress, horizontalPadding = 9.dp)
+                    AuroraPill("Explore", onNavigateToExplore, horizontalPadding = 9.dp)
                 }
+                Spacer(Modifier.height(12.dp))
+                AuroraPanel(Modifier.fillMaxWidth(), AuroraBlue, onNavigateToPathway) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        AuroraMedallion(AdaptIcons.Target, AuroraCyan, Modifier.size(39.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("Today's study target", style = AdaptTheme.typography.labelMedium, color = AdaptTheme.colors.textSecondary)
+                            Text(if (studied > 0) "$studied of $target min" else "$target min planned",
+                                style = AdaptTheme.typography.titleMedium, color = AdaptTheme.colors.textPrimary)
+                        }
+                        Icon(AdaptIcons.ArrowForward, null, tint = auroraAccent, modifier = Modifier.size(17.dp))
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text("Continue learning", style = AdaptTheme.typography.titleMedium, color = AdaptTheme.colors.textPrimary)
+                    TextButton(onClick = { overview = true }) { Text("Overview") }
+                }
+                AuroraPanel(Modifier.fillMaxWidth(), AuroraViolet, if (topic == null) onNavigateToExplore else onNavigateToLesson) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        AuroraMedallion(AdaptIcons.Notebook, AuroraViolet, Modifier.size(39.dp))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(topic?.name ?: "Find a subject", color = AdaptTheme.colors.textPrimary,
+                                style = AdaptTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(topic?.subject ?: "Choose what you want to learn", color = AdaptTheme.colors.textSecondary,
+                                style = AdaptTheme.typography.bodySmall)
+                        }
+                        Icon(AdaptIcons.Play, null, tint = auroraAccent, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
             }
-            if (!compact) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    TextButton(onNavigateToExplore) { Text("Explore") }
-                    TextButton({ onNavigateToPractice(PracticeMode.SESSION) }) { Text("Practice") }
-                    TextButton(onNavigateToProgress) { Text("Progress") }
+        }
+    }
+
+}
+
+@Composable
+internal fun AuroraComposer(
+    text: String, onText: (String) -> Unit, placeholder: String, voice: AuroraVoice, send: () -> Unit,
+    modifier: Modifier = Modifier, enabled: Boolean = true, maxLines: Int = 1,
+    sendDescription: String = "Send message to AI Tutor"
+) {
+    var focused by remember { mutableStateOf(false) }
+    val padding by animateDpAsState(if (focused) 8.dp else 4.dp, label = "Composer focus")
+    val accent = auroraAccent
+    val shape = RoundedCornerShape(30.dp)
+    Column(modifier) {
+        voice.status?.let {
+            Text(it, color = AdaptTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                style = AdaptTheme.typography.bodySmall)
+        }
+        Row(
+            Modifier.fillMaxWidth().clip(shape).background(Brush.horizontalGradient(listOf(auroraPanel, auroraRaised)))
+                .border(1.3.dp, accent.copy(alpha = if (focused) .95f else .68f), shape)
+                .padding(start = 17.dp, end = 3.dp, top = padding, bottom = padding),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BasicTextField(text, onText, Modifier.weight(1f).onFocusChanged { focused = it.isFocused }
+                .semantics { contentDescription = placeholder },
+                textStyle = AdaptTheme.typography.bodyMedium.copy(color = AdaptTheme.colors.textPrimary),
+                cursorBrush = SolidColor(accent), singleLine = maxLines == 1, maxLines = maxLines,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { if (enabled) send() }),
+                decorationBox = { content ->
+                    Box {
+                        if (text.isEmpty()) Text(placeholder, color = AdaptTheme.colors.textSecondary,
+                            style = AdaptTheme.typography.bodyMedium)
+                        content()
+                    }
                 }
-                session?.topic?.let { topic ->
-                    TextButton(onNavigateToLesson, Modifier.align(Alignment.CenterHorizontally)) {
-                        Text("Continue ${topic.name} \u00b7 ${session.preferences.minutes} min/day")
+            )
+            IconButton(onClick = voice.toggle) {
+                Canvas(Modifier.size(21.dp).semantics {
+                    contentDescription = if (voice.listening) "Stop listening" else "Start offline voice input"
+                }) {
+                    listOf(.23f, .55f, .86f, .45f, .28f).forEachIndexed { i, height ->
+                        val x = size.width * (.14f + i * .18f)
+                        drawLine(accent, Offset(x, size.height * (1-height)/2),
+                            Offset(x, size.height * (1+height)/2), 2.dp.toPx(), StrokeCap.Round)
                     }
                 }
             }
-            TextButton(
-                onClick = { overview = true },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) { Text("Learning overview", color = muted, fontSize = 12.sp) }
+            if (text.isNotBlank()) {
+                IconButton(send, enabled = enabled) {
+                    Box(Modifier.size(35.dp).background(Brush.linearGradient(listOf(AuroraBlue, Color(0xFF2349CF))), CircleShape),
+                        contentAlignment = Alignment.Center) {
+                        Icon(AdaptIcons.ArrowForward, sendDescription, tint = Color.White, modifier = Modifier.size(19.dp))
+                    }
+                }
+            }
         }
     }
 }
 
-private data class AuroraVoice(
+internal data class AuroraVoice(
     val listening: Boolean,
     val amplitude: Float,
     val status: String?,
@@ -240,7 +279,7 @@ private data class AuroraVoice(
 )
 
 @Composable
-private fun rememberAuroraVoice(onTranscript: (String) -> Unit): AuroraVoice {
+internal fun rememberAuroraVoice(onTranscript: (String) -> Unit): AuroraVoice {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val transcript by rememberUpdatedState(onTranscript)

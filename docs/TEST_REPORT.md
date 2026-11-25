@@ -1,5 +1,17 @@
 # Test report
 
+## EMBER 1.1.0
+
+- The debug, unsigned release and instrumentation APKs built. All 122 JVM tests passed. Android lint reported zero errors and 41 warnings.
+- The physical RMX5116 passed the opt-in Llama/ExecuTorch smoke test and Room profile-isolation test in airplane mode with Wi-Fi and mobile data off. The model test verified the installed bundle, collected non-empty streamed text and unloaded the native module.
+- The recording shows the current application with actual local Tutor output, generated Algebra practice and deterministic scoring. Separate checks verified bundled OCR with a local printed fixture and C trace scoring. See [device validation](DEVICE_VALIDATION.md).
+
+To rerun the targeted model and profile tests, install the debug and instrumentation APKs, provision the model, and disable the phone's radios.
+
+```text
+adb shell am instrument -w -e emberPhysicalOffline 1 -e class com.example.adapt_ai_ui.inference.OfflineModelDeviceTest,com.example.adapt_ai_ui.data.platform.ProfileIsolationTest com.example.adapt_ai_ui.test/androidx.test.runner.AndroidJUnitRunner
+```
+
 ## Personal learning platform
 
 The revised ARM64 debug APK and instrumentation APK built. All 122 JVM tests passed. Lint reported zero errors and 36 warnings. A physical Room test passed on the realme RMX5116 and checked profile isolation, per-topic conversation keys and cascading deletion. The installed app preserved the prior learner and verified model during an in-place upgrade. In airplane mode with Wi-Fi and mobile data off, a separate profile selected Algebra and generated `2x + 5 = 11` through ExecuTorch. The app computed `x = 3`, built the choices, scored a submitted wrong answer as 0%, and restored the result after force-stop and restart. A generated Algebra lesson opened and was marked complete. The learner's goal and 25-minute weekly study blocks also appeared on the phone. These checks cover Algebra. The full five-scenario acceptance suite remains open.

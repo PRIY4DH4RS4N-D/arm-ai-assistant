@@ -16,8 +16,10 @@ data class DraftQuiz(val quiz: TopicQuiz, val answers: List<Int> = emptyList())
 data class TopicState(
     val lesson: String = "", val completedAt: Long? = null, val bookmarked: Boolean = false,
     val note: String = "", val draft: DraftQuiz? = null, val attempts: List<QuizEvidence> = emptyList(),
-    val reported: Set<String> = emptySet(), val studySeconds: Long = 0
+    val reported: Set<String> = emptySet(), val studySeconds: Long = 0,
+    val studyByDate: Map<String, Long>? = null
 )
+data class SavedScan(val jpeg: String, val text: String)
 data class AssessedMastery(val percentage: Int, val responses: Int) {
     val lowConfidence get() = responses < 5
 }

@@ -82,10 +82,30 @@ class LearningPlatform(private val repository: PlatformRepository) {
         updateCurrentTopic(change)
     }
 
+    suspend fun loadScan(): SavedScan? {
+        val current = requireNotNull(session)
+        return repository.loadScan(current.profile.id, current.topic?.id)
+    }
+
+    suspend fun storeScan(scan: SavedScan?) {
+        val current = requireNotNull(session)
+        repository.storeScan(current.profile.id, current.topic?.id, scan)
+    }
+
+    suspend fun codingProgress() = repository.codingProgress(requireNotNull(session).profile.id)
+
+    suspend fun saveCodingProgress(progress: CodingProgress) =
+        repository.saveCodingProgress(requireNotNull(session).profile.id, progress)
+
     suspend fun recordStudy(profile: String, topic: String, seconds: Long) {
         if (seconds <= 0) return
         try {
-            val updated = repository.updateTopic(profile, topic) { it.copy(studySeconds = it.studySeconds + seconds) }
+            val today = java.time.LocalDate.now().toString()
+            val updated = repository.updateTopic(profile, topic) {
+                val days = it.studyByDate.orEmpty()
+                it.copy(studySeconds = it.studySeconds + seconds,
+                    studyByDate = days + (today to (days.getOrDefault(today, 0L) + seconds)))
+            }
             val current = session
             if (current?.profile?.id == profile && topic in current.preferences.interests) {
                 session = current.copy(topicStates = current.topicStates + (topic to updated))

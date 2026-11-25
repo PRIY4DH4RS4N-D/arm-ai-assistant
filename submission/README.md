@@ -1,10 +1,10 @@
-# Aurora submission files
+# EMBER submission package
 
-- [Debug APK](ADAPT-AI-debug.apk) for ARM64 Android. Verify its SHA-256 against [SHA256SUMS.txt](SHA256SUMS.txt).
-- [Technical report](../docs/TECHNICAL_REPORT.md)
-- [Compliance matrix](../docs/COMPLIANCE_MATRIX.md)
-- [Model setup](../docs/MODEL_SETUP.md)
-- [Physical phone demonstration](demo/ADAPT_AI_PS4_Demo_120s.mp4), [demo narration outline](demo/DEMO_NARRATION.md), and [recording checklist](demo/RECORDING_CHECKLIST.md)
-- [Aurora Home](screenshots/aurora-home.png), [model manager](screenshots/model-manager.png), [Journey](screenshots/learning-journey.png), [offline Tutor](screenshots/offline-tutor.png)
+Choose **PS4 – On-device personalised learning assistant** in the form.
 
-The debug-signed APK uses a separately provisioned model. The silent demo shows profile switching, the Algebra study plan, a streamed Tutor answer, live quiz generation, and deterministic scoring on the realme RMX5116 in airplane mode. [Platform screenshots](screenshots/platform/).
+- [Public project repository](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant)
+- [Public project demonstration video](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/download/ember-v1.1.0/EMBER_PS4_DEMO_120S.mp4)
+- [Final project report PDF](EMBER_Final_Project_Report.pdf) for the 10 MB upload field
+- The mentor-review answer depends on whether your team received that review.
+
+The [release downloads](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/tag/ember-v1.1.0) include the APK used on the phone and the unsigned release candidate. See the [device-validation record](../docs/DEVICE_VALIDATION.md) and [checksums](SHA256SUMS.txt).

@@ -1,4 +1,6 @@
-# Aurora architecture
+# EMBER architecture
+
+EMBER 1.1.0 extends the app's existing profile-scoped Room records with study minutes by local date, coding drafts, solved exercises, and saved scans. The introduction and orb are Compose components. Scan & Learn uses the bundled Latin recognizer before a learner can share editable text with the existing local Tutor. See [offline architecture](OFFLINE_ARCHITECTURE.md) and [Llama integration](LLAMA_EXECUTORCH_INTEGRATION.md).
 
 The personal learning platform adds `PlatformRepository` and a Room database scoped by local profile ID. The topic workspace holds saved lessons, drafts, attempts, study time, notes and revision evidence. `LearningPlatform` coordinates profile switching and routes generation through the existing `LocalTutor`, which serializes access to the device model. See the [data model](DATA_MODEL.md), [learning engine](LEARNING_ENGINE.md) and [quiz engine](QUIZ_ENGINE.md).
 

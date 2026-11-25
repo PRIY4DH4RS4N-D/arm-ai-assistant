@@ -6,6 +6,10 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,32 +62,44 @@ internal fun AuroraModelManager(runtime: LocalTutor) {
             }
         }
     }
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Offline AI model", style = MaterialTheme.typography.titleLarge)
-            Text(state.label, style = MaterialTheme.typography.labelLarge)
-            Text("Llama 3.2 1B · ExecuTorch 1.0.0 · XNNPACK CPU")
-            Text(
-                "${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} · ${Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown ABI"}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                "${runtime.store.availableBytes / 1_048_576} MiB free storage · ${memory.availMem / 1_048_576} MiB RAM available at open",
-                style = MaterialTheme.typography.bodySmall
-            )
-            installed?.let { model ->
-                Text("Revision ${model.revision} · ${model.quantization} · ${model.bytes} bytes", style = MaterialTheme.typography.bodySmall)
-                Text("Model SHA-256\n${model.hash}", style = MaterialTheme.typography.bodySmall)
-                Text("Tokenizer SHA-256\n${model.tokenizerHash}", style = MaterialTheme.typography.bodySmall)
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        AuroraPanel(Modifier.fillMaxWidth(), AuroraBlue) {
+            AuroraOrb(if (busy) OrbState.THINKING else OrbState.IDLE, { 0f }, Modifier.size(76.dp))
+            Text("Offline AI model", style = AdaptTheme.typography.headlineSmall, color = AdaptTheme.colors.textPrimary)
+            Text("Llama 3.2 1B", style = AdaptTheme.typography.titleMedium, color = AdaptTheme.colors.textPrimary)
+            Text(state.label, color = auroraAccent, modifier = Modifier.padding(top = 5.dp))
+            Text("ExecuTorch 1.0.0  |  XNNPACK CPU", style = AdaptTheme.typography.bodySmall,
+                color = AdaptTheme.colors.textSecondary)
+            if (busy && state != ModelState.GENERATING) {
+                LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 9.dp), color = auroraAccent)
             }
-            if (!arm64) Text("The tutor requires ARM64 Android.")
-            if (busy && state != ModelState.GENERATING) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (state == ModelState.IMPORTING) Text("${bytes / 1_048_576} MiB copied")
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Button(onClick = { import.launch(arrayOf("application/zip", "application/octet-stream")) }, enabled = !busy && arm64) {
-                Text(if (installed == null) "Import model bundle" else "Replace model bundle")
-            }
-            if (installed != null) {
+        }
+        AuroraPanel(Modifier.fillMaxWidth()) {
+            Text("Device and storage", style = AdaptTheme.typography.titleMedium)
+            Text("${Build.MANUFACTURER} ${Build.MODEL}  |  Android ${Build.VERSION.RELEASE}",
+                color = AdaptTheme.colors.textSecondary)
+            Text(Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown ABI", color = AdaptTheme.colors.textSecondary)
+            Text("${runtime.store.availableBytes / 1_048_576} MiB free storage",
+                modifier = Modifier.padding(top = 6.dp))
+            Text("${memory.availMem / 1_048_576} MiB RAM available at open",
+                color = AdaptTheme.colors.textSecondary)
+            if (!arm64) Text("The tutor requires ARM64 Android.")
+        }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        AuroraAction(if (installed == null) "Import model bundle" else "Replace model bundle",
+            { import.launch(arrayOf("application/zip", "application/octet-stream")) },
+            Modifier.fillMaxWidth(), enabled = !busy && arm64, icon = AdaptIcons.ArrowForward)
+        installed?.let { model ->
+            AuroraPanel(Modifier.fillMaxWidth()) {
+                Text("Verified model bundle", style = AdaptTheme.typography.titleMedium)
+                Text("Revision ${model.revision}  |  ${model.quantization}",
+                    style = AdaptTheme.typography.bodySmall, color = AdaptTheme.colors.textSecondary)
+                Text("${model.bytes / 1_048_576} MiB installed", style = AdaptTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Model SHA-256\n${model.hash}", style = AdaptTheme.typography.bodySmall)
+                Spacer(Modifier.height(5.dp))
+                Text("Tokenizer SHA-256\n${model.tokenizerHash}", style = AdaptTheme.typography.bodySmall)
                 Row {
                     TextButton(onClick = { scope.launch { runtime.unload() } }, enabled = state == ModelState.READY) {
                         Text("Unload")
@@ -91,8 +107,9 @@ internal fun AuroraModelManager(runtime: LocalTutor) {
                     TextButton(onClick = { confirmDelete = true }, enabled = !busy) { Text("Delete model") }
                 }
             }
-            Text("Inference and learning data stay on this device.", style = MaterialTheme.typography.bodySmall)
         }
+        Text("Inference and learning data stay on this device.",
+            style = AdaptTheme.typography.bodySmall, color = AdaptTheme.colors.textSecondary)
     }
     if (confirmDelete) {
         AlertDialog(

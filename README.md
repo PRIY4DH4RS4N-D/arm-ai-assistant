@@ -1,35 +1,34 @@
-# ADAPT-AI · Aurora
+# EMBER
 
-Aurora is an Android learning assistant for ARM Bharat AI-SoC Challenge PS4. Set a learning goal, follow a curriculum, practise offline, and use quiz evidence to choose what to review. With a verified model bundle installed, the Tutor uses the device’s ExecuTorch runtime for Llama responses.
+EMBER is an on-device personalised learning assistant for the ARM Bharat AI-SoC Challenge, PS4. The Android app connects a local catalogue, learner profiles and study plans with an offline Llama tutor, scored practice and revision. The cinematic introduction and animated orb run in Jetpack Compose.
 
-Create a local profile or continue as a guest. Explore 88 offline topics, save several interests, or define a custom subject and topic. Open a topic to set a goal, generate lessons and quizzes, maintain notes, or review its study schedule and progress. Profile lets you switch learners and change AI preferences.
+## Submission
+
+- [Public two-minute phone demonstration](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/download/ember-v1.1.0/EMBER_PS4_DEMO_120S.mp4)
+- [Final project report](submission/EMBER_Final_Project_Report.pdf)
+- [APK downloads](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/tag/ember-v1.1.0)
+- [Phone screenshots](docs/ui-verification/) and [completion matrix](docs/COMPLETION_MATRIX.md)
+
+The recording shows the software running on the realme P4 Pro 5G RMX5116, ARM64, Android 16, in airplane mode with Wi-Fi and mobile data off. It shows live local Tutor output, a generated Algebra quiz, deterministic scoring and persisted progress.
 
 ## Build and run
 
-Install JDK 25, Android SDK Platform 37.0, Build Tools 36.0.0, and Android Platform Tools. From this repository on Windows:
+Install JDK 25, Android SDK Platform 37.0, Build Tools 36.0.0 and Android Platform Tools.
 
-```powershell
-.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest
+~~~powershell
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest :app:assembleRelease
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.example.adapt_ai_ui/.MainActivity
-```
+~~~
 
-The APK targets ARM64. The Model Manager is in Profile. Import an authorized Llama 3.2 1B Instruct bundle using the [model setup guide](docs/MODEL_SETUP.md). The catalog, saved material, study plan and completed assessments remain available without loading the model. New AI lessons, quizzes and Tutor responses require the installed model. Voice input and read-aloud require the device’s offline speech services.
+The APK targets ARM64. In Profile, open Model Status and import an authorised Llama 3.2 1B Instruct bundle from local storage. Local catalogue browsing, saved records and bundled OCR are available before that import. Voice depends on available on-device Android speech services. [Model provisioning](docs/MODEL_PROVISIONING.md)
 
-## Architecture
+## Engineering documentation
 
-Native Kotlin and Jetpack Compose provide the five destinations. Tutor, lesson generation and quiz generation reuse the pinned ExecuTorch 1.0.0 runtime. Room stores learning records scoped to the selected local learner and imports data from the previous release. Kotlin scores validated quizzes and updates progress from the recorded answers. See the [architecture](docs/ARCHITECTURE.md), [data model](docs/DATA_MODEL.md), [learning engine](docs/LEARNING_ENGINE.md), [quiz engine](docs/QUIZ_ENGINE.md) and [technical report](docs/TECHNICAL_REPORT.md).
+- [Engineering baseline](docs/ENGINEERING_BASELINE.md), [product overview](docs/PRODUCT_OVERVIEW.md) and [architecture](docs/ARCHITECTURE.md)
+- [Offline architecture](docs/OFFLINE_ARCHITECTURE.md), [Llama and ExecuTorch](docs/LLAMA_EXECUTORCH_INTEGRATION.md) and [benchmarks](docs/MODEL_BENCHMARKS.md)
+- [Engineering catalogue](docs/ENGINEERING_COURSE_CATALOGUE.md), [learning engine](docs/LEARNING_ENGINE.md) and [camera OCR](docs/CAMERA_OCR.md)
+- [Device validation](docs/DEVICE_VALIDATION.md), [test report](docs/TEST_REPORT.md), [UI verification](docs/UI_VERIFICATION.md) and [privacy](docs/PRIVACY_AND_SECURITY.md)
+- [Release guide](docs/RELEASE_GUIDE.md), [demo script](docs/DEMO_SCRIPT.md) and [submission instructions](submission/README.md)
 
-## Validation and submission
-
-- [Debug APK and submission files](submission/README.md)
-- [Host and device test report](docs/TEST_REPORT.md) and [compliance matrix](docs/COMPLIANCE_MATRIX.md)
-- [Offline verification](docs/OFFLINE_VERIFICATION.md) and [benchmark protocol](docs/PERFORMANCE_BENCHMARK.md)
-- [Two-minute phone demo script](docs/DEMO_SCRIPT_120S.md) and [recording checklist](submission/demo/RECORDING_CHECKLIST.md)
-- [Known limitations](docs/KNOWN_LIMITATIONS.md) and [release notes](docs/RELEASE_NOTES.md)
-
-On-device evidence from realme P4 Pro 5G, Android 16. [Two-minute demo](submission/demo/ADAPT_AI_PS4_Demo_120s.mp4) ? [Aurora Home](submission/screenshots/platform/home.png) ? [Explore subjects](submission/screenshots/platform/explore.png) ? [Offline Tutor](submission/screenshots/platform/tutor.png) ? [Quiz result](submission/screenshots/platform/quiz-result.png)
-
-## Sources and notices
-
-Source history originates in [Surya10-cse/arm-ps4-learning-assistant](https://github.com/Surya10-cse/arm-ps4-learning-assistant). See the [third-party and model notices](docs/THIRD_PARTY_NOTICES.md).
+The repository builds without licensed model weights. See the [third-party and model notices](docs/THIRD_PARTY_NOTICES.md). Source history originates in [Surya10-cse/arm-ps4-learning-assistant](https://github.com/Surya10-cse/arm-ps4-learning-assistant).

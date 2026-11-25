@@ -51,6 +51,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import com.example.adapt_ai_ui.ui.components.AuroraScene
+import com.example.adapt_ai_ui.ui.components.AuroraPanel
+import com.example.adapt_ai_ui.ui.components.AuroraPill
+import com.example.adapt_ai_ui.ui.components.auroraPanel
+import com.example.adapt_ai_ui.ui.components.auroraLine
+import com.example.adapt_ai_ui.ui.components.auroraAccent
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -131,6 +138,8 @@ fun TutorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var textInput by remember { mutableStateOf("") }
+    val voice = rememberAuroraVoice { textInput = it }
+    val keyboard = LocalSoftwareKeyboardController.current
     var showClearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(initialPrompt) {
@@ -151,197 +160,54 @@ fun TutorScreen(
 
     fun submitQuery(queryText: String) {
         if (queryText.isBlank() || isGenerating) return
+        voice.stop()
+        keyboard?.hide()
         textInput = ""
         viewModel?.send(queryText.trim(), learner, topicTitle, personalization)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AdaptTheme.colors.background)
-            .statusBarsPadding()
-    ) {
-        // ====================================================================
-        // 1. Editorial Obsidian Masthead with Domain Context & Actions
-        // ====================================================================
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f, fill = false),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (onNavigateBack != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(AdaptTheme.colors.raisedSurface)
-                            .border(AdaptTheme.stroke.hairline, AdaptTheme.colors.borderSubtle, CircleShape)
-                            .clickable(role = Role.Button, onClick = onNavigateBack)
-                            .semantics { contentDescription = "Navigate back" },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = AdaptIcons.ArrowBack,
-                            contentDescription = null,
-                            tint = AdaptTheme.colors.textPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                }
-
-                Column {
-                    Text(
-                        text = "${learner.activeDomainTitle} • ${topicTitle}".uppercase(),
-                        style = AdaptTheme.typographyExt.overline,
-                        color = AdaptTheme.colors.primaryAccent,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "AI Learning Tutor",
-                            style = AdaptTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = AdaptTheme.colors.textPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(AdaptTheme.radius.extraSmall))
-                                .background(AdaptTheme.colors.secondaryAccentContainer.copy(alpha = 0.25f))
-                                .border(
-                                    AdaptTheme.stroke.hairline,
-                                    AdaptTheme.colors.secondaryAccent.copy(alpha = 0.35f),
-                                    RoundedCornerShape(AdaptTheme.radius.extraSmall)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = modelState.label,
-                                style = AdaptTheme.typography.labelSmall.copy(
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                ),
-                                color = AdaptTheme.colors.secondaryAccent
-                            )
-                        }
-                    }
-                }
+    AuroraScene(modifier) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            if (onNavigateBack != null) IconButton(onNavigateBack) {
+                Icon(AdaptIcons.ArrowBack, "Back", tint = AdaptTheme.colors.textPrimary)
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Clear conversation button
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(AdaptTheme.colors.raisedSurface)
-                    .border(AdaptTheme.stroke.hairline, AdaptTheme.colors.borderSubtle, CircleShape)
-                    .clickable(
-                        role = Role.Button,
-                        onClick = { showClearDialog = true }
-                    )
-                    .semantics { contentDescription = "Clear conversation history" },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = AdaptIcons.Trash,
-                    contentDescription = null,
-                    tint = AdaptTheme.colors.textMuted,
-                    modifier = Modifier.size(16.dp)
-                )
+            AuroraOrb(when {
+                narrator.speaking -> OrbState.SPEAKING
+                voice.listening -> OrbState.LISTENING
+                modelState == ModelState.LOADING -> OrbState.LOADING
+                modelState == ModelState.ERROR -> OrbState.ERROR
+                isGenerating && draft.isNotBlank() -> OrbState.GENERATING
+                isGenerating -> OrbState.THINKING
+                else -> OrbState.IDLE
+            }, { voice.amplitude }, Modifier.size(46.dp))
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f)) {
+                Text("AI Tutor", style = AdaptTheme.typography.titleLarge, color = AdaptTheme.colors.textPrimary)
+                Text("${modelState.label} | $topicTitle", color = auroraAccent,
+                    style = AdaptTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            IconButton({ showClearDialog = true }) {
+                Icon(AdaptIcons.Trash, "Clear conversation history", tint = AdaptTheme.colors.textSecondary)
             }
         }
-
         if (modelState == ModelState.MISSING || modelState == ModelState.ERROR) {
             TextButton(onClick = onOpenModelManager, modifier = Modifier.padding(horizontal = 12.dp)) {
                 Text("Manage offline model")
             }
         }
-
-        // ====================================================================
-        // 2. 5-Mode Editorial Selector Bar
-        // ====================================================================
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             TutorMode.entries.forEach { mode ->
-                val isSelected = mode == activeMode
-                val containerColor = if (isSelected) {
-                    AdaptTheme.colors.primaryAccent.copy(alpha = if (AdaptTheme.isDark) 0.22f else 0.15f)
-                } else {
-                    AdaptTheme.colors.raisedSurface
-                }
-                val borderColor = if (isSelected) {
-                    AdaptTheme.colors.primaryAccent.copy(alpha = 0.6f)
-                } else {
-                    AdaptTheme.colors.borderSubtle
-                }
-                val textColor = if (isSelected) {
-                    AdaptTheme.colors.primaryAccent
-                } else {
-                    AdaptTheme.colors.textSecondary
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(AdaptTheme.radius.full))
-                        .background(containerColor)
-                        .border(
-                            width = AdaptTheme.stroke.hairline,
-                            color = borderColor,
-                            shape = RoundedCornerShape(AdaptTheme.radius.full)
-                        )
-                        .clickable(enabled = !isGenerating, role = Role.RadioButton) {
-                            if (mode != activeMode) {
-                                TutorRepository.setMode(
-                                    mode = mode,
-                                    learnerName = learner.name,
-                                    domainTitle = learner.activeDomainTitle,
-                                    currentTopic = topicTitle
-                                )
-                            }
-                        }
-                        .semantics {
-                            selected = isSelected
-                            contentDescription = "${mode.title} mode: ${mode.description}"
-                        }
-                        .padding(horizontal = 12.dp, vertical = 7.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = mode.iconEmoji, fontSize = 12.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = mode.title,
-                            style = AdaptTheme.typography.labelSmall.copy(
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                            ),
-                            color = textColor
-                        )
-                    }
-                }
+                AuroraPill(mode.title, {
+                    if (mode != activeMode) TutorRepository.setMode(mode, learner.name, learner.activeDomainTitle, topicTitle)
+                }, Modifier.semantics { contentDescription = "${mode.title} mode: ${mode.description}" },
+                    active = mode == activeMode, enabled = !isGenerating)
             }
         }
-
         // ====================================================================
         // 3. Conversation Message Stream
         // ====================================================================
@@ -470,95 +336,11 @@ fun TutorScreen(
             }
         }
 
-        // ====================================================================
-        // 5. Editorial Message Composer Bar (Compact & Vertically Centred)
-        // ====================================================================
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .imePadding()
-                .background(AdaptTheme.colors.surface)
-                .border(
-                    width = AdaptTheme.stroke.hairline,
-                    color = AdaptTheme.colors.borderSubtle
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = textInput,
-                    onValueChange = { textInput = it },
-                    placeholder = {
-                        Text(
-                            text = when (activeMode) {
-                                TutorMode.TEACH_ME -> "Ask for an explanation or analogy..."
-                                TutorMode.SOCRATIC -> "Ask for a hint or explore intuition..."
-                                TutorMode.DEBUG -> "Paste code snippet, issue, or error..."
-                                TutorMode.PRACTICE -> "Request a conceptual or calculation drill..."
-                                TutorMode.REVIEW -> "Ask for formulas or milestone review..."
-                            },
-                            style = AdaptTheme.typography.bodySmall,
-                            color = AdaptTheme.colors.textMuted
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(AdaptTheme.radius.medium),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AdaptTheme.colors.primaryAccent,
-                        unfocusedBorderColor = AdaptTheme.colors.borderSubtle,
-                        focusedContainerColor = AdaptTheme.colors.raisedSurface,
-                        unfocusedContainerColor = AdaptTheme.colors.raisedSurface,
-                        focusedTextColor = AdaptTheme.colors.textPrimary,
-                        unfocusedTextColor = AdaptTheme.colors.textPrimary,
-                        cursorColor = AdaptTheme.colors.primaryAccent
-                    ),
-                    trailingIcon = {
-                        if (textInput.isNotEmpty()) {
-                            IconButton(
-                                onClick = { textInput = "" },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = AdaptIcons.Cross,
-                                    contentDescription = "Clear input text",
-                                    tint = AdaptTheme.colors.textMuted,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
-                        }
-                    },
-                    maxLines = 4
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Button(
-                    onClick = { submitQuery(textInput) },
-                    enabled = textInput.isNotBlank() && !isGenerating,
-                    shape = RoundedCornerShape(AdaptTheme.radius.medium),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AdaptTheme.colors.primaryAccent,
-                        contentColor = if (AdaptTheme.isDark) Color(0xFF0F172A) else Color.White,
-                        disabledContainerColor = AdaptTheme.colors.raisedSurface,
-                        disabledContentColor = AdaptTheme.colors.textMuted
-                    ),
-                    modifier = Modifier
-                        .size(48.dp)
-                        .semantics { contentDescription = "Send message to AI Tutor" },
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Icon(
-                        imageVector = AdaptIcons.ArrowForward,
-                        contentDescription = null,
-                        tint = if (AdaptTheme.isDark) Color(0xFF0F172A) else Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
+        AuroraComposer(textInput, { textInput = it }, "Type a message...", voice,
+            { submitQuery(textInput) },
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
+            maxLines = 4, enabled = !isGenerating)
+    }
     }
 
     // ========================================================================
@@ -615,45 +397,12 @@ fun TutorScreen(
 // -------------------------------------------------------------
 @Composable
 private fun UserMessageBubble(message: TutorConversationMessage) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = AdaptTheme.radius.large,
-                        topEnd = AdaptTheme.radius.large,
-                        bottomStart = AdaptTheme.radius.large,
-                        bottomEnd = 4.dp
-                    )
-                )
-                .background(
-                    AdaptTheme.colors.primaryAccentContainer.copy(
-                        alpha = if (AdaptTheme.isDark) 0.38f else 0.22f
-                    )
-                )
-                .border(
-                    width = AdaptTheme.stroke.hairline,
-                    color = AdaptTheme.colors.primaryAccent.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape(
-                        topStart = AdaptTheme.radius.large,
-                        topEnd = AdaptTheme.radius.large,
-                        bottomStart = AdaptTheme.radius.large,
-                        bottomEnd = 4.dp
-                    )
-                )
-                .padding(14.dp)
-                .semantics { contentDescription = "You asked: ${message.content}" }
-        ) {
-            Text(
-                text = message.content,
-                style = AdaptTheme.typography.bodyMedium,
-                color = AdaptTheme.colors.textPrimary
-            )
-        }
+    val corners = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 6.dp)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Text(message.content, Modifier.fillMaxWidth(.82f).clip(corners)
+            .background(Brush.horizontalGradient(listOf(Color(0xFF103762), Color(0xFF222762))))
+            .padding(horizontal = 15.dp, vertical = 11.dp),
+            color = Color.White, style = AdaptTheme.typography.bodyMedium.copy(lineHeight = 20.sp))
     }
 }
 
@@ -671,18 +420,7 @@ private fun TutorAssistantCard(
 ) {
     val payload = message.structuredPayload
 
-    AdaptSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) {
-                contentDescription = "ADAPT-AI Tutor in ${message.mode.title} mode: ${message.content}"
-            },
-        shape = RoundedCornerShape(AdaptTheme.radius.large),
-        backgroundColor = AdaptTheme.colors.surface,
-        borderColor = AdaptTheme.colors.borderSubtle,
-        borderWidth = AdaptTheme.stroke.hairline,
-        contentPadding = PaddingValues(16.dp)
-    ) {
+    AuroraPanel(Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Header Row: Avatar, Mode Badge, Copy action
             Row(
@@ -691,25 +429,11 @@ private fun TutorAssistantCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(AdaptTheme.colors.primaryAccentContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = AdaptIcons.Sparkle,
-                            contentDescription = null,
-                            tint = AdaptTheme.colors.primaryAccent,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-
+                    AuroraOrb(OrbState.IDLE, { 0f }, Modifier.size(29.dp))
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = "ADAPT-AI",
+                        text = "EMBER",
                         style = AdaptTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = AdaptTheme.colors.textPrimary
                     )
@@ -783,7 +507,8 @@ private fun TutorAssistantCard(
             Text(
                 text = message.content,
                 style = AdaptTheme.typography.bodyMedium,
-                color = AdaptTheme.colors.textPrimary
+                color = AdaptTheme.colors.textPrimary,
+                lineHeight = 21.sp
             )
 
             // Optional Concept Explanation Card
@@ -1008,7 +733,7 @@ private fun TutorAssistantCard(
             if (payload != null && payload.executionModelLabel.startsWith("Llama 3.2")) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${payload.executionModelLabel} ? ${payload.inferenceTimeMs} ms",
+                    text = "${payload.executionModelLabel} | ${payload.inferenceTimeMs} ms",
                     style = AdaptTheme.typography.labelSmall,
                     color = AdaptTheme.colors.textMuted
                 )

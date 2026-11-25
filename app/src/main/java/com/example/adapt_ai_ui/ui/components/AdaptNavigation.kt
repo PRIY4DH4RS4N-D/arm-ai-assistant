@@ -66,39 +66,26 @@ fun AdaptBottomNav(
         NavItem(Screen.Profile, AdaptIcons.Profile, "Profile")
     )
 
-    val topBorderBrush = Brush.horizontalGradient(
-        listOf(
-            Color.Transparent,
-            AdaptTheme.colors.glassBorder,
-            AdaptTheme.colors.glassHighlight,
-            AdaptTheme.colors.glassBorder,
-            Color.Transparent
-        )
-    )
-
+    val shape = RoundedCornerShape(topStart = 21.dp, topEnd = 21.dp)
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(AdaptTheme.colors.glassSurface)
-            .border(
-                width = AdaptTheme.stroke.hairline,
-                brush = topBorderBrush,
-                shape = RectangleShape
-            )
-            .navigationBarsPadding()
+        modifier = modifier.fillMaxWidth().background(auroraBase)
+            .padding(horizontal = 4.dp).clip(shape)
+            .background(Brush.verticalGradient(listOf(auroraPanel, auroraBase)))
+            .border(1.dp, auroraLine, shape).navigationBarsPadding()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(61.dp)
                 .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
-                val isSelected = currentScreen == item.screen
+                val isSelected = currentScreen == item.screen ||
+                    (currentScreen == Screen.Progress && item.screen == Screen.Pathway)
                 val selectionColor by animateColorAsState(
-                    if (isSelected) AdaptTheme.colors.primaryAccentContainer else Color.Transparent,
+                    if (isSelected) auroraAccent.copy(alpha = .13f) else Color.Transparent,
                     label = "Selected navigation tab"
                 )
 
@@ -130,7 +117,7 @@ fun AdaptBottomNav(
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
                             tint = if (isSelected)
-                                AdaptTheme.colors.primaryAccent
+                                auroraAccent
                             else
                                 AdaptTheme.colors.textMuted
                         )
@@ -145,7 +132,7 @@ fun AdaptBottomNav(
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         ),
                         color = if (isSelected)
-                            AdaptTheme.colors.primaryAccent
+                            auroraAccent
                         else
                             AdaptTheme.colors.textMuted,
                         maxLines = 1

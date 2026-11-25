@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.adapt_ai_ui"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1.0"
         ndk { abiFilters += "arm64-v8a" }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -42,6 +42,7 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:2.8.4")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("org.pytorch:executorch-android:1.0.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation(platform(libs.androidx.compose.bom))

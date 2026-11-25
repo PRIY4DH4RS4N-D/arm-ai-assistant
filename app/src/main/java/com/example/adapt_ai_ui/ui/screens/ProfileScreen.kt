@@ -68,6 +68,11 @@ import com.example.adapt_ai_ui.ui.components.AdaptSectionHeader
 import com.example.adapt_ai_ui.ui.components.AdaptSurface
 import com.example.adapt_ai_ui.data.TutorRepository
 import com.example.adapt_ai_ui.ui.components.AuroraModelManager
+import com.example.adapt_ai_ui.ui.components.AuroraHeader
+import com.example.adapt_ai_ui.ui.components.AuroraPill
+import com.example.adapt_ai_ui.ui.components.AuroraPanel
+import com.example.adapt_ai_ui.ui.components.AuroraViolet
+import com.example.adapt_ai_ui.ui.components.auroraBase
 import com.example.adapt_ai_ui.ui.theme.ADAPTAIUITheme
 import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import com.example.adapt_ai_ui.ui.theme.LocalThemeManager
@@ -81,7 +86,9 @@ fun ProfileScreen(
     onNavigateToPathway: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     onLearningPreferences: (() -> Unit)? = null,
-    onSwitchProfiles: (() -> Unit)? = null
+    onSwitchProfiles: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
+    onReplayIntro: (() -> Unit)? = null
 ) {
     val platform = LocalLearningPlatform.current
     val scope = rememberCoroutineScope()
@@ -99,6 +106,7 @@ fun ProfileScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(false) }
     var nameInput by remember { mutableStateOf("") }
+    var showOriginalSettings by remember { mutableStateOf(false) }
 
     // Aggregate authentic evaluation metrics
     val totalAttempts = topicStats.values.sumOf { it.totalAttempts }
@@ -108,27 +116,51 @@ fun ProfileScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(AdaptTheme.colors.background)
+            .background(auroraBase)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
-        if (onLearningPreferences != null || onSwitchProfiles != null) {
-            Column {
-                Text(platform?.session?.profile?.name ?: "Profile", style = MaterialTheme.typography.headlineSmall)
-                Row(Modifier.horizontalScroll(rememberScrollState())) {
-                    onLearningPreferences?.let { TextButton(it) { Text("Learning preferences") } }
-                    onSwitchProfiles?.let { TextButton(it, enabled = platform?.busy != true) { Text("Switch profile") } }
+        if (onBack != null) AuroraHeader("Profile Settings", onBack)
+        AuroraPanel(Modifier.fillMaxWidth(), AuroraViolet) {
+            Text("Learner name", style = AdaptTheme.typography.titleMedium)
+            Text(platform?.session?.profile?.name ?: learner.name, color = AdaptTheme.colors.textSecondary)
+            TextButton(onClick = {
+                nameInput = platform?.session?.profile?.name ?: learner.name.takeUnless { it == "learner" }.orEmpty()
+                editName = true
+            }) { Text("Edit learner name") }
+        }
+        AuroraPanel(Modifier.fillMaxWidth()) {
+            Text("Appearance", style = AdaptTheme.typography.titleMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    AuroraPill(mode.title, {
+                        themeManager?.setThemeMode(mode)
+                        localThemeMode = mode
+                    }, Modifier.semantics { contentDescription = "Select ${mode.title} theme" },
+                        active = activeThemeMode == mode)
                 }
             }
         }
-        TutorRepository.runtime?.let { AuroraModelManager(it) }
-        TextButton(onClick = {
-            nameInput = learner.name.takeUnless { it == "learner" }.orEmpty()
-            editName = true
-        }) { Text("Edit learner name") }
+        if (onLearningPreferences != null || onSwitchProfiles != null || onReplayIntro != null) {
+            AuroraPanel(Modifier.fillMaxWidth()) {
+                onLearningPreferences?.let { TextButton(it) { Text("Learning preferences") } }
+                onReplayIntro?.let { TextButton(it) { Text("Replay EMBER intro") } }
+                onSwitchProfiles?.let { TextButton(it, enabled = platform?.busy != true) { Text("Switch profile") } }
+            }
+        }
+        platform?.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        if (onBack == null) TutorRepository.runtime?.let { AuroraModelManager(it) }
+        if (onBack != null && platform?.session?.profile?.id != "legacy") {
+            AuroraPill(
+                if (showOriginalSettings) "Hide original course settings" else "Original course settings",
+                { showOriginalSettings = !showOriginalSettings }
+            )
+            if (!showOriginalSettings) return@Column
+        }
 
         // ====================================================================
         // 1. Editorial Masthead
@@ -1239,103 +1271,6 @@ fun ProfileScreen(
                                             modifier = Modifier.size(14.dp)
                                         )
                                     }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // ====================================================================
-        // 6. Appearance & Display Theme
-        // ====================================================================
-        Column(modifier = Modifier.fillMaxWidth()) {
-            AdaptSectionHeader(
-                title = "Appearance & Theme",
-                overline = "DISPLAY CUSTOMIZATION"
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            AdaptSurface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(AdaptTheme.radius.large),
-                backgroundColor = AdaptTheme.colors.surface,
-                borderColor = AdaptTheme.colors.borderSubtle,
-                borderWidth = AdaptTheme.stroke.hairline,
-                contentPadding = PaddingValues(12.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ThemeMode.entries.forEach { mode ->
-                        val isSelected = activeThemeMode == mode
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(AdaptTheme.radius.medium))
-                                .background(
-                                    if (isSelected) AdaptTheme.colors.primaryAccentContainer.copy(alpha = if (AdaptTheme.isDark) 0.35f else 0.22f)
-                                    else AdaptTheme.colors.raisedSurface
-                                )
-                                .border(
-                                    width = AdaptTheme.stroke.hairline,
-                                    color = if (isSelected) AdaptTheme.colors.primaryAccent else AdaptTheme.colors.borderSubtle,
-                                    shape = RoundedCornerShape(AdaptTheme.radius.medium)
-                                )
-                                .clickable(
-                                    role = Role.RadioButton,
-                                    onClick = {
-                                        themeManager?.setThemeMode(mode)
-                                        localThemeMode = mode
-                                    }
-                                )
-                                .semantics {
-                                    selected = isSelected
-                                    contentDescription = "Select ${mode.title} theme"
-                                }
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = mode.title,
-                                    style = AdaptTheme.typography.titleMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    color = if (isSelected) AdaptTheme.colors.primaryAccent else AdaptTheme.colors.textPrimary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = when (mode) {
-                                        ThemeMode.SYSTEM -> "Automatically matches device system dark/light configuration"
-                                        ThemeMode.LIGHT -> "Soft Pearl high-contrast day palette"
-                                        ThemeMode.DARK -> "Editorial Obsidian Midnight Liquid Glass"
-                                    },
-                                    style = AdaptTheme.typography.bodySmall,
-                                    color = AdaptTheme.colors.textSecondary
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (isSelected) AdaptTheme.colors.primaryAccent else AdaptTheme.colors.textMuted,
-                                        shape = CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isSelected) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .clip(CircleShape)
-                                            .background(AdaptTheme.colors.primaryAccent)
-                                    )
                                 }
                             }
                         }

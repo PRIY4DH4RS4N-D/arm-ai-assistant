@@ -120,6 +120,27 @@ class PlatformRepository(private val context: Context) {
             })
         }
 
+    suspend fun loadScan(profile: String, topic: String?) = withContext(Dispatchers.IO) {
+        dao.read(profile, scanKey(topic))?.let { platformJson.fromJson(it, SavedScan::class.java) }
+    }
+
+    suspend fun storeScan(profile: String, topic: String?, scan: SavedScan?) = withContext(Dispatchers.IO) {
+        if (scan == null) dao.delete(profile, scanKey(topic))
+        else put(profile, scanKey(topic), platformJson.toJson(scan))
+        Unit
+    }
+
+    private fun scanKey(topic: String?) = "scan/${topic ?: "_profile"}"
+
+    suspend fun codingProgress(profile: String): CodingProgress = withContext(Dispatchers.IO) {
+        dao.read(profile, "platform/coding")?.let { platformJson.fromJson(it, CodingProgress::class.java) }
+            ?: CodingProgress()
+    }
+
+    suspend fun saveCodingProgress(profile: String, progress: CodingProgress) = withContext(Dispatchers.IO) {
+        put(profile, "platform/coding", platformJson.toJson(progress))
+    }
+
     private fun readPreferences(id: String): LearningPreferences {
         val stored = dao.read(id, "platform/preferences")
             ?.let { platformJson.fromJson(it, StoredPreferences::class.java) } ?: return LearningPreferences()

@@ -5,8 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -15,16 +18,20 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.adapt_ai_ui.data.DifficultyLevel
 import com.example.adapt_ai_ui.data.platform.*
-import com.example.adapt_ai_ui.ui.components.AuroraOrb
-import com.example.adapt_ai_ui.ui.components.OrbState
+import com.example.adapt_ai_ui.ui.components.*
+import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.Instant
@@ -35,39 +42,86 @@ import java.util.UUID
 @Composable
 fun WelcomePlatform(platform: LearningPlatform) {
     val scope = rememberCoroutineScope()
-    var create by rememberSaveable { mutableStateOf(false) }
+    var page by rememberSaveable { mutableStateOf(if (platform.profiles.isEmpty()) "welcome" else "profiles") }
+    var name by rememberSaveable { mutableStateOf("") }
     var delete by remember { mutableStateOf<LocalLearner?>(null) }
-    Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding()
-            .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("ADAPT-AI", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.align(Alignment.Start))
-        AuroraOrb(OrbState.IDLE, { 0f }, Modifier.sizeIn(maxWidth = 255.dp).width(250.dp).aspectRatio(1f))
-        Text("Learn what matters to you", style = MaterialTheme.typography.headlineSmall)
-        Text("A personal AI tutor for your subjects, goals and practice.", modifier = Modifier.padding(vertical = 12.dp))
-        Button({ create = true }, Modifier.fillMaxWidth(), enabled = !platform.busy) { Text("Create profile") }
-        OutlinedButton(
-            { scope.launch { platform.create("Guest", true) } }, Modifier.fillMaxWidth(), enabled = !platform.busy
-        ) { Text("Continue as guest") }
-        if (platform.profiles.isNotEmpty()) {
-            Text("Local profiles", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
-            for (profile in platform.profiles) {
-                ListItem(
-                    headlineContent = { Text(profile.name) },
-                    supportingContent = { Text(if (profile.guest) "Guest" else "On this device") },
-                    trailingContent = { TextButton({ delete = profile }, enabled = !platform.busy) { Text("Delete") } },
-                    modifier = Modifier.clickable(enabled = !platform.busy) { scope.launch { platform.open(profile.id) } }
-                )
+    BackHandler(page != "welcome") { page = if (page == "create" && platform.profiles.isNotEmpty()) "profiles" else "welcome" }
+    AuroraScene(Modifier.fillMaxSize().safeDrawingPadding(), waves = true) {
+        Column(
+            Modifier.align(Alignment.Center).widthIn(max = 500.dp).fillMaxSize()
+                .verticalScroll(rememberScrollState()).padding(horizontal = 25.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (page != "welcome") IconButton({ page = if (page == "create" && platform.profiles.isNotEmpty()) "profiles" else "welcome" }) {
+                    Icon(AdaptIcons.ArrowBack, "Back")
+                }
+                AuroraOrb(OrbState.IDLE, { 0f }, Modifier.size(33.dp))
+                Text("EMBER", color = AdaptTheme.colors.textPrimary, fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium)
             }
+            if (page == "welcome") {
+                Spacer(Modifier.height(39.dp))
+                AuroraOrb(OrbState.IDLE, { 0f }, Modifier.size(260.dp))
+                Text("Your personal AI learning intelligence", color = auroraAccent, textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(22.dp))
+                Text("Learn smarter.\nGrow faster.", style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = AdaptTheme.colors.textPrimary)
+                Spacer(Modifier.height(60.dp))
+                AuroraAction("Get started", { page = "create" }, Modifier.fillMaxWidth(), icon = AdaptIcons.ArrowForward)
+                Spacer(Modifier.height(8.dp))
+                AuroraPill("Continue as guest", { scope.launch { platform.create("Guest", true) } },
+                    Modifier.fillMaxWidth(), enabled = !platform.busy)
+                if (platform.profiles.isNotEmpty()) TextButton({ page = "profiles" }) { Text("Local profiles") }
+            } else {
+                Spacer(Modifier.height(22.dp))
+                Text(if (page == "create") "Create your profile" else "Welcome back",
+                    color = AdaptTheme.colors.textPrimary, style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                Text(if (page == "create") "Choose the name Aurora will use." else "Choose a local learner profile.",
+                    color = AdaptTheme.colors.textSecondary, textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 19.dp))
+                AuroraMedallion(AdaptIcons.Profile, AuroraCyan, Modifier.size(92.dp))
+                Spacer(Modifier.height(25.dp))
+                if (page == "create") {
+                    OutlinedTextField(name, { name = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true,
+                        label = { Text("Display name") }, shape = RoundedCornerShape(25.dp),
+                        leadingIcon = { Icon(AdaptIcons.Profile, null, tint = auroraAccent) })
+                    Spacer(Modifier.height(14.dp))
+                    AuroraAction("Create profile", { scope.launch { platform.create(name.trim(), false) } },
+                        Modifier.fillMaxWidth(), enabled = name.isNotBlank() && !platform.busy, violet = true)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        platform.profiles.forEach { profile ->
+                            AuroraPanel(Modifier.fillMaxWidth(), onClick = {
+                                if (!platform.busy) scope.launch { platform.open(profile.id) }
+                            }) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    AuroraMedallion(AdaptIcons.Profile, AuroraViolet, Modifier.size(39.dp))
+                                    Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+                                        Text(profile.name, color = AdaptTheme.colors.textPrimary, style = MaterialTheme.typography.titleMedium)
+                                        Text(if (profile.guest) "Guest" else "On this device", color = AdaptTheme.colors.textSecondary,
+                                            style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    IconButton({ delete = profile }, enabled = !platform.busy) {
+                                        Icon(AdaptIcons.Trash, "Delete " + profile.name, tint = AdaptTheme.colors.textSecondary,
+                                            modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    AuroraAction("Create profile", { page = "create" }, Modifier.fillMaxWidth(), violet = true)
+                    TextButton({ scope.launch { platform.create("Guest", true) } }, enabled = !platform.busy) {
+                        Text("Continue as guest")
+                    }
+                }
+            }
+            platform.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp)) }
+            if (platform.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         }
-        platform.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        if (platform.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-    }
-    if (create) NameDialog("Create a local profile", "", { create = false }) { name ->
-        create = false
-        scope.launch { platform.create(name, false) }
     }
     delete?.let { profile ->
         AlertDialog(onDismissRequest = { delete = null }, title = { Text("Delete ${profile.name}?") },
@@ -81,20 +135,8 @@ fun WelcomePlatform(platform: LearningPlatform) {
 }
 
 @Composable
-internal fun NameDialog(title: String, initial: String, close: () -> Unit, save: (String) -> Unit) {
-    var name by rememberSaveable { mutableStateOf(initial) }
-    AlertDialog(onDismissRequest = close, title = { Text(title) },
-        text = { OutlinedTextField(name, { name = it.take(60) }, label = { Text("Display name") }, singleLine = true) },
-        confirmButton = { Button({ save(name.trim()) }, enabled = name.isNotBlank()) { Text("Save") } },
-        dismissButton = { TextButton(close) { Text("Cancel") } })
-}
-
-@Composable
 internal fun PanelHeader(title: String, onBack: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onBack) { Text("Back") }
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-    }
+    AuroraHeader(title, onBack)
 }
 
 @Composable
@@ -111,55 +153,106 @@ fun SubjectExplorer(platform: LearningPlatform, onBack: () -> Unit, onTopic: () 
     val categories = current.catalog.map { it.category }.distinct()
     val list = LearningCatalog.search(query, filter, current.preferences.customTopics)
         .filter { !savedOnly || it.id in selected }
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        PanelHeader("Explore subjects", onBack)
-        OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), label = { Text("Search subjects or concepts") }, singleLine = true)
-        Row(Modifier.padding(vertical = 6.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            FilterChip(filter == null && !savedOnly, { filter = null; savedOnly = false }, { Text("All") })
-            FilterChip(savedOnly, { filter = null; savedOnly = !savedOnly }, { Text("Saved (${selected.size})") })
-            categories.forEach { category ->
-                FilterChip(filter == category, { filter = category; savedOnly = false }, { Text(category) })
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button({
-                scope.launch {
-                    platform.savePreferences(current.preferences.copy(
-                        interests = selected, activeTopic = current.preferences.activeTopic?.takeIf { it in selected }
-                    ))
+    var group by remember { mutableStateOf<String?>(null) }
+    val subjects = list.groupBy { it.subject }
+    AuroraScene(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 17.dp)) {
+            PanelHeader("Explore subjects", onBack)
+            OutlinedTextField(query, { query = it; group = null }, Modifier.fillMaxWidth(),
+                placeholder = { Text("Search subjects or concepts") }, singleLine = true,
+                shape = RoundedCornerShape(27.dp), leadingIcon = { Icon(AdaptIcons.Search, null, tint = auroraAccent) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = auroraPanel, unfocusedContainerColor = auroraPanel,
+                    focusedBorderColor = auroraAccent, unfocusedBorderColor = auroraLine
+                ))
+            Row(Modifier.padding(vertical = 9.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                AuroraPill("All", { filter = null; savedOnly = false; group = null }, active = filter == null && !savedOnly)
+                val ordered = listOf("Science & mathematics", "Languages", "Creative") + categories
+                ordered.distinct().filter { it in categories }.forEach { category ->
+                    val label = when (category) {
+                        "Science & mathematics" -> "Science & Math"
+                        "Creative" -> "Arts"
+                        else -> category
+                    }
+                    AuroraPill(label, { filter = category; savedOnly = false; group = null },
+                        active = filter == category, horizontalPadding = 10.dp)
                 }
-            }, enabled = !platform.busy) { Text("Save interests") }
-            OutlinedButton({ editor = null; editOpen = true }, enabled = !platform.busy) { Text("Custom topic") }
-        }
-        platform.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
-            if (query.isBlank() && filter == null && !savedOnly && current.preferences.recentTopics.isNotEmpty()) {
-                item {
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        current.preferences.recentTopics.mapNotNull { id -> current.catalog.firstOrNull { it.id == id } }.forEach { topic ->
-                            AssistChip({ detail = topic }, { Text(topic.name) })
+                AuroraPill("Saved (${selected.size})", { filter = null; savedOnly = !savedOnly; group = null }, active = savedOnly)
+            }
+            platform.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            LazyVerticalGrid(GridCells.Adaptive(136.dp), Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(9.dp), horizontalArrangement = Arrangement.spacedBy(9.dp),
+                contentPadding = PaddingValues(top = 4.dp, bottom = 12.dp)) {
+                if (group != null) item(span = { GridItemSpan(maxLineSpan) }) {
+                    TextButton({ group = null }) { Text("All subjects") }
+                }
+                if (query.isBlank() && filter == null && !savedOnly && group == null && current.preferences.recentTopics.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            current.preferences.recentTopics.mapNotNull { id -> current.catalog.firstOrNull { it.id == id } }.forEach { topic ->
+                                AuroraPill(topic.name, { detail = topic })
+                            }
                         }
                     }
                 }
-            }
-            if (list.isEmpty()) item { Text("No topics match this search.") }
-            items(list, key = { it.id }) { topic ->
-                Card(Modifier.fillMaxWidth().clickable { detail = topic }, colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-                )) {
-                    Row(Modifier.padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f).padding(vertical = 12.dp)) {
-                            Text(topic.name, style = MaterialTheme.typography.titleMedium)
-                            Text(topic.subject, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                            Text(topic.concepts.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+                if (list.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { Text("No topics match this search.") }
+                if (group == null && query.isBlank() && !savedOnly) {
+                    items(subjects.entries.toList(), key = { it.key }) { (subject, topics) ->
+                        val badge = when (subject) {
+                            "Mathematics" -> AdaptIcons.Target to AuroraCyan
+                            "Physics" -> AdaptIcons.Sparkle to AuroraBlue
+                            "Chemistry" -> AdaptIcons.Lightbulb to AuroraViolet
+                            "Biology" -> AdaptIcons.Pathway to AuroraGreen
+                            "Programming", "Computer Science" -> AdaptIcons.Code to AuroraCyan
+                            "Artificial Intelligence" -> AdaptIcons.Tutor to AuroraBlue
+                            else -> when (topics.first().category) {
+                                "Engineering" -> AdaptIcons.Pathway to AuroraBlue
+                                "Technology" -> AdaptIcons.Code to AuroraCyan
+                                "Languages", "Humanities" -> AdaptIcons.Notebook to AuroraViolet
+                                else -> AdaptIcons.Compass to AuroraGreen
+                            }
                         }
-                        Checkbox(topic.id in selected, {
-                            selected = if (it) selected + topic.id else selected - topic.id
-                        })
+                        AuroraPanel(Modifier.fillMaxWidth().heightIn(min = 128.dp), onClick = { group = subject }) {
+                            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                AuroraMedallion(badge.first, badge.second, Modifier.size(42.dp))
+                                Spacer(Modifier.height(7.dp))
+                                Text(subject, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                                    color = AdaptTheme.colors.textPrimary, style = MaterialTheme.typography.titleSmall)
+                                Text(topics.take(2).joinToString(", ") { it.name }, textAlign = TextAlign.Center,
+                                    color = AdaptTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                } else {
+                    items(if (group == null) list else subjects[group].orEmpty(), key = { it.id }) { topic ->
+                        val checked = topic.id in selected
+                        AuroraPanel(Modifier.fillMaxWidth(), if (checked) AuroraCyan else null, onClick = { detail = topic }) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                AuroraMedallion(AdaptIcons.Notebook, AuroraViolet, Modifier.size(34.dp))
+                                Spacer(Modifier.weight(1f))
+                                Checkbox(checked, { selected = if (it) selected + topic.id else selected - topic.id },
+                                    modifier = Modifier.semantics { contentDescription = "Save " + topic.name })
+                            }
+                            Text(topic.name, color = AdaptTheme.colors.textPrimary, style = MaterialTheme.typography.titleSmall)
+                            Text(topic.concepts.joinToString(" / "), color = AdaptTheme.colors.textSecondary,
+                                style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
                     }
                 }
+                item(span = { GridItemSpan(maxLineSpan) }) { TextButton(onArchive) { Text("Browse original courses") } }
             }
-            item { TextButton(onArchive) { Text("Browse original courses") } }
+            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                AuroraPill("Save interests", {
+                    scope.launch {
+                        platform.savePreferences(current.preferences.copy(
+                            interests = selected, activeTopic = current.preferences.activeTopic?.takeIf { it in selected }
+                        ))
+                    }
+                }, Modifier.weight(1f), enabled = !platform.busy)
+                AuroraAction("Custom topic", { editor = null; editOpen = true }, Modifier.weight(1f),
+                    enabled = !platform.busy, icon = AdaptIcons.Plus)
+            }
         }
     }
     detail?.let { topic ->
@@ -243,8 +336,9 @@ fun PlatformPreferences(platform: LearningPlatform, onBack: () -> Unit) {
     val date = remember(deadline) { runCatching { LocalDate.parse(deadline) }.getOrNull() }
     val valid = minutes.toIntOrNull() in 5..180 && prefs.studyDays.isNotEmpty() &&
         (deadline.isBlank() || date != null)
+    AuroraScene {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-        PanelHeader("Learning preferences", onBack)
+        AuroraHeader("Learning Preferences", onBack)
         OutlinedTextField(prefs.goal, { prefs = prefs.copy(goal = it.take(250)) }, Modifier.fillMaxWidth(), label = { Text("Learning goal") })
         Text("How much do you already know?", style = MaterialTheme.typography.titleMedium)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -265,7 +359,7 @@ fun PlatformPreferences(platform: LearningPlatform, onBack: () -> Unit) {
         OutlinedTextField(prefs.style, { prefs = prefs.copy(style = it.take(80)) }, label = { Text("Explanation style") }, singleLine = true)
         OutlinedTextField(prefs.language, { prefs = prefs.copy(language = it.take(40)) }, label = { Text("Preferred language") }, singleLine = true)
         OutlinedTextField(prefs.assistant, { prefs = prefs.copy(assistant = it.take(40)) }, label = { Text("Assistant name") }, singleLine = true)
-        Button({
+        AuroraAction("Save preferences", {
             scope.launch {
                 platform.savePreferences(prefs.copy(
                     minutes = requireNotNull(minutes.toIntOrNull()), deadline = date,
@@ -273,7 +367,8 @@ fun PlatformPreferences(platform: LearningPlatform, onBack: () -> Unit) {
                 ))
                 if (platform.error == null) onBack()
             }
-        }, enabled = valid && !platform.busy) { Text("Save preferences") }
+        }, Modifier.fillMaxWidth(), enabled = valid && !platform.busy)
         platform.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
+}
 }
