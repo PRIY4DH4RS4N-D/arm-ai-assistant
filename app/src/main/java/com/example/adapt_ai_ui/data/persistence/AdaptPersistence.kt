@@ -887,6 +887,11 @@ object AdaptPersistence {
         return repo
     }
 
+    fun attach(repo: AdaptPersistenceRepository, domains: Map<String, String>) {
+        repository = repo
+        syncToSingletons(repo, domains)
+    }
+
     fun getRepository(): AdaptPersistenceRepository {
         return repository ?: error("AdaptPersistence not initialized. Call AdaptPersistence.init(context) first.")
     }
@@ -969,7 +974,9 @@ object AdaptPersistence {
     /**
      * Synchronizes persisted states into UI singletons on application startup.
      */
-    private fun syncToSingletons(repo: AdaptPersistenceRepository) {
+    private fun syncToSingletons(repo: AdaptPersistenceRepository, domains: Map<String, String>? = null) {
+        SampleData.domainProgressRecords.clear()
+        SampleData.customTopics = emptyList()
         // Sync Learner Profile
         SampleData.learnerProfile = repo.profileFlow.value
 
@@ -989,10 +996,8 @@ object AdaptPersistence {
 
         // Sync Tutor
         TutorRepository.activeMode = repo.activeModeFlow.value
-        if (repo.messagesFlow.value.isNotEmpty()) {
-            TutorRepository.conversationMessages.clear()
-            TutorRepository.conversationMessages.addAll(repo.messagesFlow.value)
-        }
+        TutorRepository.conversationMessages.clear()
+        TutorRepository.conversationMessages.addAll(repo.messagesFlow.value)
 
         // Hydrate per-domain curriculum progress
         val activeDomain = repo.profileFlow.value.activeDomainId
@@ -1005,7 +1010,7 @@ object AdaptPersistence {
         )
         DomainRepository.domains.forEach { d ->
             if (d.id != activeDomain) {
-                val rawDomainCurriculum = repo.getRawCurriculumForDomain(d.id)
+                val rawDomainCurriculum = if (domains != null) domains[d.id] else repo.getRawCurriculumForDomain(d.id)
                 if (rawDomainCurriculum != null) {
                     val m = AdaptJsonSerializers.deserializeCurriculumModule(rawDomainCurriculum)
                     val n = AdaptJsonSerializers.deserializeCurriculumNodes(rawDomainCurriculum)
@@ -1024,7 +1029,5 @@ object AdaptPersistence {
             }
         }
 
-        // Hydrate saved onboarding preferences and custom topics
-        repo.loadInitialOnboarding()
     }
 }

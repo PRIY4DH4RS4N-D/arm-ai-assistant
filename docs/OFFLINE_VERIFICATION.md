@@ -1,5 +1,7 @@
 # Offline verification
 
+The personal learning platform was checked on the same RMX5116 under the same radio settings. The new tests verified local profile creation, Algebra discovery, live model-generated choice practice, deterministic scoring and restoration of the active learner and quiz result after restart. A generated Algebra lesson opened and saved its completion state.
+
 On 25 November 2026, the ARM64 debug APK ran on a realme P4 Pro 5G (RMX5116), Android 16, API 36. ADB reported `airplane_mode_on=1`, `wifi_on=0`, and `mobile_data=0` during model activation, generation and the scored practice flow. See the [APK checksum](../submission/SHA256SUMS.txt) and [model manifest](../models/spinquant-manifest.json).
 
 - **Pass.** Android Build Tools found no Internet permission in the packaged manifest.

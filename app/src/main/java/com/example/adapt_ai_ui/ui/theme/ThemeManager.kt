@@ -13,14 +13,16 @@ enum class ThemeMode(val title: String) {
     DARK("Dark Mode")
 }
 
-class ThemeManager(context: Context) {
+class ThemeManager(context: Context, profileId: String? = null) {
     private val prefs = context.applicationContext.getSharedPreferences("adapt_ai_theme_prefs", Context.MODE_PRIVATE)
+
+    private val key = profileId?.takeUnless { it == "legacy" }?.let { "theme_mode_$it" } ?: "theme_mode"
 
     var currentThemeMode by mutableStateOf(loadThemeMode())
         private set
 
     private fun loadThemeMode(): ThemeMode {
-        val savedName = prefs.getString("theme_mode", ThemeMode.SYSTEM.name)
+        val savedName = prefs.getString(key, ThemeMode.SYSTEM.name)
         return try {
             ThemeMode.valueOf(savedName ?: ThemeMode.SYSTEM.name)
         } catch (_: Exception) {
@@ -30,7 +32,7 @@ class ThemeManager(context: Context) {
 
     fun setThemeMode(mode: ThemeMode) {
         currentThemeMode = mode
-        prefs.edit { putString("theme_mode", mode.name) }
+        prefs.edit { putString(key, mode.name) }
     }
 }
 

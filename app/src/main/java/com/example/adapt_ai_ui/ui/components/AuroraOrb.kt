@@ -26,7 +26,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 internal enum class OrbState(val speed: Double, val glow: Float) {
-    IDLE(0.34, 0.75f), LISTENING(0.55, 1f), THINKING(1.45, 1.12f), LOADING(0.8, 0.9f)
+    IDLE(0.34, 0.75f), LISTENING(0.55, 1f), THINKING(1.45, 1.12f), LOADING(0.8, 0.9f),
+    SPEAKING(0.95, 1f), SUCCESS(0.7, 1f), ERROR(0.24, 0.68f)
 }
 
 @Composable
@@ -47,7 +48,11 @@ internal fun AuroraOrb(state: OrbState, amplitude: () -> Float, modifier: Modifi
     Spacer(modifier.drawWithCache {
         val radius = size.minDimension * 0.325f
         val middle = Offset(size.width / 2, size.height / 2)
-        val colors = listOf(Color(0xFF1D5BFF), Color(0xFF45DAFF), Color(0xFF7867FF))
+        val colors = when (state) {
+            OrbState.SUCCESS -> listOf(Color(0xFF1D5BFF), Color(0xFF53EABE), Color(0xFF79F2FF))
+            OrbState.ERROR -> listOf(Color(0xFF4D55C3), Color(0xFFF489AC), Color(0xFF7867FF))
+            else -> listOf(Color(0xFF1D5BFF), Color(0xFF45DAFF), Color(0xFF7867FF))
+        }
         val atmosphere = Brush.radialGradient(
             listOf(Color(0x8E2548ED), Color(0x30226CF9), Color.Transparent), middle, radius * 1.62f
         )

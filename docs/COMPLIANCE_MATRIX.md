@@ -37,3 +37,21 @@
 | GitHub verification | PASS | Remote main, rendered README and downloadable artifacts verified |
 
 [Tests](TEST_REPORT.md) · [Technical report](TECHNICAL_REPORT.md) · [Model manifest](../models/spinquant-manifest.json)
+
+## Personal learning platform
+
+| Requirement | Status | Evidence or open gate |
+| --- | --- | --- |
+| Local profile creation and selection | PASS | Created a separate learner on RMX5116 with all network radios for internet access disabled |
+| Guest, rename and confirmed deletion | PARTIAL | Implemented. Full interaction tests pending |
+| Profile isolation | PASS | On-device Room instrumentation verified independent profiles and topic conversations |
+| Subject discovery and nested concept search | PASS | Offline catalog rendered on RMX5116. JVM tests verify search and unique IDs |
+| Multi-select and custom subjects/topics | PARTIAL | Implemented with persisted interests and custom hierarchy. Full device tests pending |
+| Goal, baseline and schedule | PARTIAL | Editable goals and preferences, separate diagnostic records and bounded weekly plan. Broad scenario checks pending |
+| Generated lessons | PARTIAL | Uses real ExecuTorch. Cross-domain quality and rendering coverage pending |
+| Generated Algebra quiz | PASS | RMX5116 generated an equation offline, created valid answer choices and accepted the submitted answer |
+| Generated quizzes across all topics | PARTIAL | Model JSON validation implemented. Broad reliability unverified |
+| Quiz validation and scoring | PASS | JVM tests and physical Algebra scoring |
+| Mastery, mistake notebook and revision | PARTIAL | Weighted scoring, exclusions and intervals implemented. Longitudinal validation pending |
+| Local notes and personalized Tutor | PARTIAL | Notes import and bounded topic context implemented. Cross-topic voice and language tests pending |
+| Physical platform APK | PASS | Upgrade installed on RMX5116, preserving the existing learner and installed model |

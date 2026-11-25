@@ -1,6 +1,8 @@
 package com.example.adapt_ai_ui.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +33,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.adapt_ai_ui.data.platform.LocalLearningPlatform
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,8 +79,12 @@ fun ProfileScreen(
     onNavigateToLesson: (() -> Unit)? = null,
     onNavigateToPractice: ((PracticeMode) -> Unit)? = null,
     onNavigateToPathway: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLearningPreferences: (() -> Unit)? = null,
+    onSwitchProfiles: (() -> Unit)? = null
 ) {
+    val platform = LocalLearningPlatform.current
+    val scope = rememberCoroutineScope()
     val themeManager = LocalThemeManager.current
     var localThemeMode by remember { mutableStateOf(themeManager?.currentThemeMode ?: ThemeMode.DARK) }
     val activeThemeMode = themeManager?.currentThemeMode ?: localThemeMode
@@ -106,6 +115,15 @@ fun ProfileScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
+        if (onLearningPreferences != null || onSwitchProfiles != null) {
+            Column {
+                Text(platform?.session?.profile?.name ?: "Profile", style = MaterialTheme.typography.headlineSmall)
+                Row(Modifier.horizontalScroll(rememberScrollState())) {
+                    onLearningPreferences?.let { TextButton(it) { Text("Learning preferences") } }
+                    onSwitchProfiles?.let { TextButton(it, enabled = platform?.busy != true) { Text("Switch profile") } }
+                }
+            }
+        }
         TutorRepository.runtime?.let { AuroraModelManager(it) }
         TextButton(onClick = {
             nameInput = learner.name.takeUnless { it == "learner" }.orEmpty()
@@ -1385,8 +1403,11 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(enabled = nameInput.isNotBlank(), onClick = {
-                    SampleData.learnerProfile = SampleData.learnerProfile.copy(name = nameInput.trim())
-                    AdaptPersistence.scheduleSaveProfile(SampleData.learnerProfile)
+                    if (platform != null) scope.launch { platform.rename(nameInput) }
+                    else {
+                        SampleData.learnerProfile = SampleData.learnerProfile.copy(name = nameInput.trim())
+                        AdaptPersistence.scheduleSaveProfile(SampleData.learnerProfile)
+                    }
                     editName = false
                 }) { Text("Save") }
             },

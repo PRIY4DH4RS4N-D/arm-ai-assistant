@@ -68,8 +68,13 @@ import com.example.adapt_ai_ui.data.TutorMode
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
 import com.example.adapt_ai_ui.TutorViewModel
 import com.example.adapt_ai_ui.data.TutorRepository
+import com.example.adapt_ai_ui.data.TutorPersonalization
+import com.example.adapt_ai_ui.data.platform.LocalLearningPlatform
+import com.example.adapt_ai_ui.data.platform.mastery
 import com.example.adapt_ai_ui.inference.ModelState
 import com.example.adapt_ai_ui.ui.components.rememberOfflineNarrator
+import com.example.adapt_ai_ui.ui.components.AuroraOrb
+import com.example.adapt_ai_ui.ui.components.OrbState
 import com.example.adapt_ai_ui.data.TutorResponse
 import com.example.adapt_ai_ui.ui.components.AdaptGlassSurface
 import com.example.adapt_ai_ui.ui.components.AdaptIcons
@@ -89,8 +94,30 @@ fun TutorScreen(
     onOpenModelManager: () -> Unit = {},
     viewModel: TutorViewModel? = null
 ) {
-    val learner = SampleData.learnerProfile
-    val currentModule = SampleData.currentModule
+    val session = LocalLearningPlatform.current?.session
+    val topic = session?.topic
+    val preferences = session?.preferences
+    val base = SampleData.learnerProfile
+    val learner = base.copy(
+        name = session?.profile?.name ?: base.name,
+        activeDomainId = topic?.id ?: base.activeDomainId,
+        activeDomainTitle = topic?.subject ?: base.activeDomainTitle,
+        activeGoal = preferences?.goal?.takeIf(String::isNotBlank) ?: topic?.objective?.ifBlank { "Learn ${topic.name}" } ?: base.activeGoal,
+        skillLevel = preferences?.level ?: if (topic != null) com.example.adapt_ai_ui.data.DifficultyLevel.BEGINNER else base.skillLevel,
+        preferredLearningStyle = if (topic != null) preferences?.style.orEmpty() else base.preferredLearningStyle
+    )
+    val topicTitle = topic?.name ?: SampleData.currentModule.title
+    val topicState = session?.topicState
+    val weakest = topicState?.attempts?.flatMap { it.quiz.questions }?.map { it.competency }?.distinct()
+        ?.mapNotNull { skill -> topicState.mastery(skill)?.let { skill to it.percentage } }
+        ?.filter { it.second < 70 }?.minByOrNull { it.second }?.first
+    val personalization = TutorPersonalization(
+        assistant = preferences?.assistant ?: "Aurora",
+        language = preferences?.language ?: "English",
+        note = topicState?.note?.takeIf(String::isNotBlank),
+        assessedMastery = topicState?.mastery()?.percentage,
+        weakness = weakest
+    )
     val activeMode = viewModel?.mode ?: TutorRepository.activeMode
     val isGenerating = viewModel?.isGenerating ?: false
     val messages = viewModel?.messages ?: TutorRepository.conversationMessages
@@ -107,10 +134,10 @@ fun TutorScreen(
     var showClearDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(initialPrompt) {
-        TutorRepository.initializeSession(learner.name, learner.activeDomainTitle, currentModule.title)
+        TutorRepository.initializeSession(learner.name, learner.activeDomainTitle, topicTitle)
         if (initialPrompt != null) {
             if (isGenerating) textInput = initialPrompt.prompt
-            else viewModel?.send(initialPrompt.prompt, learner, currentModule.title)
+            else viewModel?.send(initialPrompt.prompt, learner, topicTitle, personalization)
             onInitialPromptConsumed()
         }
     }
@@ -125,7 +152,7 @@ fun TutorScreen(
     fun submitQuery(queryText: String) {
         if (queryText.isBlank() || isGenerating) return
         textInput = ""
-        viewModel?.send(queryText.trim(), learner, currentModule.title)
+        viewModel?.send(queryText.trim(), learner, topicTitle, personalization)
     }
 
     Column(
@@ -171,7 +198,7 @@ fun TutorScreen(
 
                 Column {
                     Text(
-                        text = "${learner.activeDomainTitle} • ${currentModule.title}".uppercase(),
+                        text = "${learner.activeDomainTitle} • ${topicTitle}".uppercase(),
                         style = AdaptTheme.typographyExt.overline,
                         color = AdaptTheme.colors.primaryAccent,
                         maxLines = 1,
@@ -290,7 +317,7 @@ fun TutorScreen(
                                     mode = mode,
                                     learnerName = learner.name,
                                     domainTitle = learner.activeDomainTitle,
-                                    currentTopic = currentModule.title
+                                    currentTopic = topicTitle
                                 )
                             }
                         }
@@ -346,7 +373,7 @@ fun TutorScreen(
                             },
                             onFollowUpClick = { prompt -> submitQuery(prompt) },
                             onRetryClick = {
-                                if (msg == messages.lastOrNull()) viewModel?.retry()
+                                if (msg == messages.lastOrNull()) viewModel?.retry(learner, topicTitle, personalization)
                             },
                             onSpeak = if (msg.structuredPayload?.executionModelLabel?.startsWith("Llama 3.2") == true) {
                                 { narrator.speak(msg.content) }
@@ -385,14 +412,17 @@ fun TutorScreen(
             Text(it, modifier = Modifier.padding(horizontal = 20.dp), color = AdaptTheme.colors.textSecondary)
         }
         if (narrator.speaking) {
-            TextButton(onClick = narrator.stop, modifier = Modifier.padding(horizontal = 12.dp)) { Text("Stop reading") }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AuroraOrb(OrbState.SPEAKING, { 0f }, Modifier.size(40.dp))
+                TextButton(onClick = narrator.stop) { Text("Stop reading") }
+            }
         }
 
         // ====================================================================
         // 4. Contextual Suggested Prompts Row
         // ====================================================================
-        val suggestedPrompts = remember(activeMode, learner.activeDomainId, currentModule.title) {
-            TutorRepository.getSuggestedPrompts(learner.activeDomainId, currentModule.title)
+        val suggestedPrompts = remember(activeMode, learner.activeDomainId, topicTitle) {
+            TutorRepository.getSuggestedPrompts(learner.activeDomainId, topicTitle)
         }
 
         if (suggestedPrompts.isNotEmpty() && !isGenerating) {
@@ -555,7 +585,7 @@ fun TutorScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        TutorRepository.clearSession(learner.name, learner.activeDomainTitle, currentModule.title)
+                        TutorRepository.clearSession(learner.name, learner.activeDomainTitle, topicTitle)
                         showClearDialog = false
                     }
                 ) {

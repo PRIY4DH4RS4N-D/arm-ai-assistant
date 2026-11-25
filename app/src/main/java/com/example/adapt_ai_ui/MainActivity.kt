@@ -15,6 +15,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.adapt_ai_ui.data.platform.LearningPlatform
+import com.example.adapt_ai_ui.data.platform.LocalLearningPlatform
+import com.example.adapt_ai_ui.data.platform.PlatformRepository
+import com.example.adapt_ai_ui.ui.screens.WelcomePlatform
+import com.example.adapt_ai_ui.ui.screens.SubjectExplorer
+import com.example.adapt_ai_ui.ui.screens.PlatformPreferences
+import com.example.adapt_ai_ui.ui.screens.TopicWorkspace
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -50,16 +61,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize persistent storage before UI composition
-        AdaptPersistence.init(this)
         val tutorViewModel = ViewModelProvider(this)[TutorViewModel::class.java]
-
-        val themeManager = ThemeManager(this)
-
+        val platform = LearningPlatform(PlatformRepository(applicationContext))
         setContent {
-            CompositionLocalProvider(LocalThemeManager provides themeManager) {
+            var initialized by remember { mutableStateOf(false) }
+            LaunchedEffect(platform) { platform.initialize(); initialized = true }
+            val profile = platform.session?.profile
+            val themeManager = remember(profile?.id) { ThemeManager(this, profile?.id) }
+            CompositionLocalProvider(LocalThemeManager provides themeManager, LocalLearningPlatform provides platform) {
                 ADAPTAIUITheme(themeMode = themeManager.currentThemeMode) {
-                    AdaptAppRoot(tutorViewModel)
+                    if (!initialized) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            androidx.compose.material3.CircularProgressIndicator()
+                        }
+                    } else if (profile == null) WelcomePlatform(platform)
+                    else key(profile.id) { AdaptAppRoot(tutorViewModel, platform) }
                 }
             }
         }
@@ -73,8 +89,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
+fun AdaptAppRoot(tutorViewModel: TutorViewModel, platform: LearningPlatform) {
+    val scope = rememberCoroutineScope()
+    val session = platform.session ?: return
+    val topic = session.topic
+    var currentScreen by remember {
+        mutableStateOf<Screen>(if (session.profile.id != "legacy" && session.preferences.interests.isEmpty()) Screen.Explore else Screen.Home)
+    }
     val backStack = remember { mutableStateListOf<Screen>() }
 
     var tutorInitialPrompt by remember { mutableStateOf<TutorQuickPrompt?>(null) }
@@ -103,7 +124,8 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
 
     val isFullScreenMode = currentScreen == Screen.Lesson ||
             currentScreen == Screen.Explore ||
-            currentScreen == Screen.Onboarding
+            currentScreen == Screen.Onboarding || currentScreen == Screen.Archive ||
+            currentScreen == Screen.Workspace || currentScreen == Screen.Preferences || currentScreen == Screen.Progress
 
     // Intercept hardware/gesture back to navigate to the correct previous screen
     BackHandler(enabled = currentScreen != Screen.Home) {
@@ -155,7 +177,7 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
                 when (screen) {
                     Screen.Home -> HomeScreen(
                         onNavigateToPathway = { navigateTo(Screen.Pathway) },
-                        onNavigateToLesson = { navigateTo(Screen.Lesson) },
+                        onNavigateToLesson = { navigateTo(if (topic == null) Screen.Lesson else Screen.Workspace) },
                         onNavigateToPractice = { mode ->
                             practiceInitialMode = mode
                             navigateTo(Screen.Practice)
@@ -165,10 +187,19 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
                             navigateTo(Screen.Tutor)
                         },
                         onNavigateToProfile = { navigateTo(Screen.Profile) },
-                        onNavigateToExplore = { navigateTo(Screen.Explore) }
+                        onNavigateToExplore = { navigateTo(Screen.Explore) },
+                        onNavigateToProgress = { navigateTo(if (topic == null) Screen.Profile else Screen.Progress) }
                     )
 
-                    Screen.Pathway -> PathwayScreen(
+                    Screen.Pathway, Screen.Practice -> if (topic != null) {
+                        key(topic.id, screen) {
+                            TopicWorkspace(platform, if (screen == Screen.Practice) "Practice" else "Study plan",
+                                { navigateBack() }, { navigateTo(Screen.Explore) },
+                                { navigateTo(Screen.Preferences) }, { navigateTo(Screen.Tutor) })
+                        }
+                    } else if (session.profile.id != "legacy") SubjectExplorer(platform, { navigateBack() },
+                        { navigateTo(Screen.Workspace) }, { navigateTo(Screen.Archive) })
+                    else if (screen == Screen.Pathway) PathwayScreen(
                         onNavigateBack = { navigateBack(fallback = Screen.Home) },
                         onNavigateToLesson = { navigateTo(Screen.Lesson) },
                         onNavigateToExplore = { navigateTo(Screen.Explore) },
@@ -176,6 +207,16 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
                             practiceInitialMode = mode
                             navigateTo(Screen.Practice)
                         },
+                        onAskTutor = { prompt ->
+                            tutorInitialPrompt = prompt
+                            navigateTo(Screen.Tutor)
+                        }
+                    )
+
+                    else PracticeScreen(
+                        initialMode = practiceInitialMode,
+                        onNavigateBack = { navigateBack(fallback = Screen.Home) },
+                        onSessionCompleted = { navigateBack(fallback = Screen.Home) },
                         onAskTutor = { prompt ->
                             tutorInitialPrompt = prompt
                             navigateTo(Screen.Tutor)
@@ -203,16 +244,6 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
                         }
                     )
 
-                    Screen.Practice -> PracticeScreen(
-                        initialMode = practiceInitialMode,
-                        onNavigateBack = { navigateBack(fallback = Screen.Home) },
-                        onSessionCompleted = { navigateBack(fallback = Screen.Home) },
-                        onAskTutor = { prompt ->
-                            tutorInitialPrompt = prompt
-                            navigateTo(Screen.Tutor)
-                        }
-                    )
-
                     Screen.Tutor -> TutorScreen(
                         initialPrompt = tutorInitialPrompt,
                         viewModel = tutorViewModel,
@@ -230,10 +261,27 @@ fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
                             practiceInitialMode = mode
                             navigateTo(Screen.Practice)
                         },
-                        onNavigateToPathway = { navigateTo(Screen.Pathway) }
+                        onNavigateToPathway = { navigateTo(Screen.Pathway) },
+                        onLearningPreferences = { navigateTo(Screen.Preferences) },
+                        onSwitchProfiles = { scope.launch { platform.closeProfile() } }
                     )
 
-                    Screen.Explore -> DomainExplorerScreen(
+                    Screen.Explore -> SubjectExplorer(platform, { navigateBack() }, {
+                        navigateTo(Screen.Workspace)
+                        if (platform.session?.preferences?.goal.isNullOrBlank()) navigateTo(Screen.Preferences)
+                    }, { navigateTo(Screen.Archive) })
+
+                    Screen.Workspace, Screen.Progress -> if (topic != null) {
+                        key(topic.id, screen) {
+                            TopicWorkspace(platform, if (screen == Screen.Progress) "Progress" else "Learn",
+                                { navigateBack() }, { navigateTo(Screen.Explore) },
+                                { navigateTo(Screen.Preferences) }, { navigateTo(Screen.Tutor) })
+                        }
+                    }
+
+                    Screen.Preferences -> PlatformPreferences(platform) { navigateBack() }
+
+                    Screen.Archive -> DomainExplorerScreen(
                         onNavigateBack = { navigateBack(fallback = Screen.Home) },
                         onStartOnboarding = { domain ->
                             selectedExploreDomain = domain

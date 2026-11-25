@@ -86,7 +86,8 @@ class LocalTutor(context: Context) {
         java.io.File(installed.folder, "tokenizer.model").absolutePath,
         0.3f
     )
-    fun generate(prompt: String): Flow<TutorEvent> = callbackFlow {
+    fun generate(prompt: String, sequenceLimit: Int = 1024): Flow<TutorEvent> = callbackFlow {
+        require(sequenceLimit in 256..1024)
         require(prompt.toByteArray(Charsets.UTF_8).size<=1600)
         val run=Any()
         val worker=launch(Dispatchers.IO) {
@@ -121,7 +122,7 @@ class LocalTutor(context: Context) {
                     val timedOut=AtomicBoolean(false)
                     val watchdog=launch(Dispatchers.Default) { delay(120_000); timedOut.set(true); stopOwned(run) }
                     // v1.0.0's config overload ignores maxNewTokens; use the verified native total-sequence limit.
-                    val code=try { active.generate(prompt,1024,object: LlmCallback {
+                    val code=try { active.generate(prompt,sequenceLimit,object: LlmCallback {
                         override fun onResult(result: String) {
                             if(result.isNotEmpty()) {
                                 if(ttft==null) ttft=SystemClock.elapsedRealtime()-start

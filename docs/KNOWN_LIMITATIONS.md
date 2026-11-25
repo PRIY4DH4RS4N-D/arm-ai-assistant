@@ -6,3 +6,9 @@
 - Bundled rich lesson examples and keyword grounding primarily cover INT8 quantization. Other domains offer pathway metadata and prompts. Add authored lessons and reviewed diagnostic and coding assessments for wider coverage.
 - Mastery represents scored topic accuracy. The revision notebook has interval labels and basic resolution. Calendar-driven notifications and calibrated mastery thresholds remain future work.
 - The submitted APK uses the debug signing key. A team-signed production build remains future work.
+
+- Local profiles are selectable by anyone who can use the unlocked app. PIN, biometric gating and cloud synchronization are outside this release.
+- The shipped topic catalog is a discovery index. Most new topics depend on generated teaching content and user notes. Authored source coverage is still limited.
+- Algebra has independent equation validation. Other topics require schema-valid model output and can fail when the compact model returns prose or incorrect content. Cross-domain quiz quality, written rubrics, timed sessions and a comprehensive end-to-end test of the requested five scenarios remain open.
+- Weekly planning uses date and time constraints with a topic concept sequence. A multi-topic dependency graph, deadline capacity optimization, revision notifications and historical growth charts remain future work.
+- The full app baseline has accessible input labels and reduced-motion handling. Screen-reader and high font-scale coverage across every view remains open.

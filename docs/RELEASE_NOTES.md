@@ -1,5 +1,12 @@
 # Aurora development delivery
 
+## Personal learning platform
+
+- Added local profiles and guests with Room-backed learner, topic and conversation records.
+- Added offline subject search, multiple interests, custom topics and editable study goals and schedules.
+- Added a topic workspace for local AI lessons, model-generated assessments, deterministic scoring, mastery, revision and note import.
+- Refreshed Home and added profile and topic navigation inspired by the supplied Aurora mockup.
+
 - Added a minimal Aurora Home with a lifecycle-aware Canvas orb, glass text input and on-device speech capability detection.
 - Updated shared dark and light colors, animated bottom-tab selection and added an editable learner name.
 - Kept five core destinations and made the prior dashboard accessible through Learning overview.

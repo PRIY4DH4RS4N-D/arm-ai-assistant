@@ -1,2 +1,2 @@
-af5725d98073df831ebfc7fb0b49851ebe2f362c40cf5afb3de69c3ac8b40762  ADAPT-AI-debug.apk
+4ae2adcd583d92431906dc4fa1a519034c9d13b7ba7eccfdd43d5689980e98b7  ADAPT-AI-debug.apk
 e6e11f5d8495912bd5bbdb0f222f49db6c2ae4ac79e0ded99cd8dccc0409ba30  demo/ADAPT_AI_PS4_Demo_120s.mp4

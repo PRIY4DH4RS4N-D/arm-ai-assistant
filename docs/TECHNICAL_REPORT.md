@@ -1,4 +1,12 @@
 # ADAPT-AI · Aurora
+
+## Personal learning platform update
+
+The Android app now supports local profiles and guests, an offline catalog of 88 topics, editable custom topics, multiple saved interests, topic-specific study plans and per-topic practice. Search spans subjects, topics and concepts. The new Aurora Home, local profile selector and learning workspace share the Compose theme and retain access to the earlier course flow.
+
+Room stores profile-owned topic records with cascading deletion and imports the prior application data into an existing learner profile. The Tutor retains per-topic chat context and uses learner preferences, recent scored evidence and relevant notes. The verified Llama PTE also generates lessons and quizzes. For Algebra, a generated equation is independently solved before a scored choice question can be shown. Objective scores, weighted mastery, recommendations and revision are calculated from saved responses.
+
+Implementation details are in the [data model](DATA_MODEL.md), [learning engine](LEARNING_ENGINE.md) and [quiz engine](QUIZ_ENGINE.md). The hardware and runtime figures below include observations from the previously released Android build. The [test report](TEST_REPORT.md) distinguishes validation for the new build.
 ## ARM Bharat AI-SoC Challenge 2026–27 · Problem Statement 4
 
 ### Executive summary
@@ -60,7 +68,7 @@ The current bundled quantization lesson supplies keyword-ranked concept excerpts
 
 ### Offline data, privacy and persistence
 
-The redesigned source retains application-private JSON, an asynchronous write coordinator, and theme preferences. The knowledge base is bundled with the app. Model ZIPs are imported explicitly through Android’s document picker. Installed model files are in the app’s no-backup area. App backup is disabled for conversation and learning data. The original Room database belongs to the earlier upstream application ID. A cross-package migration would require its own schema and data validation.
+The previous release used application-private JSON, an asynchronous write coordinator, and theme preferences. The current app imports that release into Room. The knowledge base is bundled with the app. Model ZIPs are imported explicitly through Android’s document picker. Installed model files are in the app’s no-backup area. App backup is disabled for conversation and learning data. The original Room database belongs to the earlier upstream application ID. A cross-package migration would require its own schema and data validation.
 
 ### Hardware and performance
 

@@ -113,6 +113,16 @@ object TutorRepository {
         generation?.cancel()
     }
 
+    suspend fun detachSession() {
+        val pending = generation
+        pending?.cancel()
+        pending?.join()
+        generation = null
+        lastRequest = null
+        lastUserMessageId = null
+        draftAnswer = ""
+    }
+
     internal fun setEngineForTest(testEngine: TutorEngine): TutorEngine {
         val previous = engine
         engine = testEngine
@@ -174,7 +184,8 @@ object TutorRepository {
         goal: String,
         skillLevel: DifficultyLevel,
         learningStyle: String,
-        retry: Boolean = false
+        retry: Boolean = false,
+        personalization: TutorPersonalization = TutorPersonalization()
     ) {
         if (query.isBlank() || isGenerating) return
 
@@ -209,14 +220,15 @@ object TutorRepository {
                 skillLevel = skillLevel,
                 learningStyle = learningStyle,
                 conversationHistory = history,
-                recentMistake = AdaptiveLearningEngine.mistakeNotebook.lastOrNull {
+                personalization = personalization,
+                recentMistake = personalization.weakness ?: AdaptiveLearningEngine.mistakeNotebook.lastOrNull {
                     !it.isResolved && (it.question.topicTag.contains(currentTopic, ignoreCase = true) ||
                         currentTopic.contains(it.question.topicTag, ignoreCase = true))
                 }?.question?.topicTag
             )
 
             lastRequest = request
-            val response = engine.generateResponse(request.copy(curriculumExcerpt = retrieveLessonExcerpt(request))) {
+            val response = engine.generateResponse(request.copy(curriculumExcerpt = personalization.note ?: retrieveLessonExcerpt(request))) {
                 draftAnswer += it
             }
             val tutorMsg = TutorConversationMessage(
@@ -262,21 +274,22 @@ object TutorRepository {
         currentTopic: String,
         goal: String,
         skillLevel: DifficultyLevel,
-        learningStyle: String
+        learningStyle: String,
+        personalization: TutorPersonalization = TutorPersonalization()
     ) {
         if (generation?.isActive == true || isGenerating) return
         generation = CoroutineScope(Dispatchers.Main).launch {
-            sendUserQueryAsync(query, domainId, domainTitle, currentTopic, goal, skillLevel, learningStyle)
+            sendUserQueryAsync(query, domainId, domainTitle, currentTopic, goal, skillLevel, learningStyle, personalization = personalization)
         }
     }
 
-    fun retryLast() {
+    fun retryLast(context: LearnerProfile = SampleData.learnerProfile, topic: String = SampleData.currentModule.title, personalization: TutorPersonalization = TutorPersonalization()) {
         if (generation?.isActive == true || isGenerating) return
-        val learner = SampleData.learnerProfile
+        val learner = context
         val user = conversationMessages.lastOrNull { !it.isTutor } ?: return
         val request = lastRequest ?: TutorRequest(
             user.content, user.mode, learner.activeDomainId, learner.activeDomainTitle,
-            SampleData.currentModule.title, learner.activeGoal, learner.skillLevel, learner.preferredLearningStyle
+            topic, learner.activeGoal, learner.skillLevel, learner.preferredLearningStyle, personalization = personalization
         )
         lastUserMessageId = user.id
         activeMode = request.mode
@@ -288,7 +301,7 @@ object TutorRepository {
         generation = CoroutineScope(Dispatchers.Main).launch {
             sendUserQueryAsync(
                 request.query, request.domainId, request.domainTitle, request.topicTitle,
-                request.goal, request.skillLevel, request.learningStyle, retry = true
+                request.goal, request.skillLevel, request.learningStyle, retry = true, personalization = request.personalization
             )
         }
     }

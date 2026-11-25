@@ -53,6 +53,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.adapt_ai_ui.data.PracticeMode
+import com.example.adapt_ai_ui.data.platform.LocalLearningPlatform
 import com.example.adapt_ai_ui.data.SampleData
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
 import com.example.adapt_ai_ui.data.TutorRepository
@@ -62,6 +63,7 @@ import com.example.adapt_ai_ui.ui.components.AuroraOrb
 import com.example.adapt_ai_ui.ui.components.OrbState
 import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import java.util.UUID
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -71,7 +73,8 @@ fun HomeScreen(
     onNavigateToTutor: (TutorQuickPrompt?) -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToExplore: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToProgress: () -> Unit = onNavigateToProfile
 ) {
     var overview by rememberSaveable { mutableStateOf(false) }
     BackHandler(overview) { overview = false }
@@ -91,6 +94,7 @@ fun HomeScreen(
     }
     val state = TutorRepository.runtime?.state?.collectAsState()?.value ?: ModelState.MISSING
     val learner = SampleData.learnerProfile
+    val session = LocalLearningPlatform.current?.session
     val keyboard = LocalSoftwareKeyboardController.current
     val dark = AdaptTheme.isDark
     val backdrop = if (dark) Color(0xFF02040A) else Color(0xFFF8FAFF)
@@ -100,10 +104,18 @@ fun HomeScreen(
     var text by rememberSaveable { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
     val voice = rememberAuroraVoice { text = it }
+    val recentFinish = session?.topicState?.let { maxOf(it.completedAt ?: 0L, it.attempts.lastOrNull()?.finishedAt ?: 0L) }
+    var celebrating by remember { mutableStateOf(false) }
+    LaunchedEffect(recentFinish) {
+        celebrating = recentFinish != null && System.currentTimeMillis() - recentFinish in 0..10_000
+        if (celebrating) { delay(4_000); celebrating = false }
+    }
     val activityState = when {
         voice.listening -> OrbState.LISTENING
         state == ModelState.GENERATING -> OrbState.THINKING
         state in setOf(ModelState.LOADING, ModelState.IMPORTING, ModelState.VERIFYING) -> OrbState.LOADING
+        state == ModelState.ERROR -> OrbState.ERROR
+        celebrating -> OrbState.SUCCESS
         else -> OrbState.IDLE
     }
     val inputPadding by animateDpAsState(if (focused) 10.dp else 5.dp, label = "Input focus")
@@ -134,7 +146,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("A U R O R A", color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("ADAPT-AI", color = ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Row(
                     Modifier.clip(CircleShape).clickable(onClick = onNavigateToProfile).padding(9.dp),
                     horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -149,10 +161,10 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                if (!compact) AuroraOrb(activityState, { voice.amplitude }, Modifier.size(artworkSize))
-                Text("Hello, ${learner.name}", color = blue, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                if (!compact) AuroraOrb(activityState, { voice.amplitude }, Modifier.size(artworkSize).clickable { onNavigateToTutor(null) }.semantics { contentDescription = "Open Tutor" })
+                Text("Hello, ${session?.profile?.name ?: learner.name}", color = blue, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 Text(
-                    "How can I help you learn today?",
+                    "What would you like to learn today?",
                     modifier = Modifier.padding(top = 9.dp).widthIn(max = 390.dp),
                     color = ink, textAlign = TextAlign.Center, fontSize = if (compact) 24.sp else 32.sp,
                     lineHeight = if (compact) 29.sp else 38.sp, fontWeight = FontWeight.SemiBold
@@ -197,6 +209,18 @@ fun HomeScreen(
                 }
                 IconButton(onClick = ::send, enabled = text.isNotBlank()) {
                     Icon(AdaptIcons.ArrowForward, "Send to Aurora", tint = if (text.isBlank()) muted else blue)
+                }
+            }
+            if (!compact) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    TextButton(onNavigateToExplore) { Text("Explore") }
+                    TextButton({ onNavigateToPractice(PracticeMode.SESSION) }) { Text("Practice") }
+                    TextButton(onNavigateToProgress) { Text("Progress") }
+                }
+                session?.topic?.let { topic ->
+                    TextButton(onNavigateToLesson, Modifier.align(Alignment.CenterHorizontally)) {
+                        Text("Continue ${topic.name} ? ${session.preferences.minutes} min/day")
+                    }
                 }
             }
             TextButton(

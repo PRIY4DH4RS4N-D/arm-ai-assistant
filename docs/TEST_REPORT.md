@@ -1,5 +1,11 @@
 # Test report
 
+## Personal learning platform
+
+The revised ARM64 debug APK and instrumentation APK built. All 122 JVM tests passed and lint passed. A physical Room test passed on the realme RMX5116 and checked profile isolation, per-topic conversation keys and cascading deletion. The installed app preserved the prior learner and verified model during an in-place upgrade. In airplane mode with Wi-Fi and mobile data off, a separate profile selected Algebra and generated `2x + 5 = 11` through ExecuTorch. The app computed `x = 3`, built the choices, scored a submitted wrong answer as 0%, and restored the result after force-stop and restart. A generated Algebra lesson opened and was marked complete. These checks cover the Algebra vertical slice. The full five-scenario acceptance suite remains open.
+
+## Earlier Aurora release
+
 - **Date** 25 November 2026
 - **Recovered baseline** `6547ba13502f38754d34055baa47e133f076f298`
 

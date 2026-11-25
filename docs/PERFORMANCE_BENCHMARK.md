@@ -1,5 +1,7 @@
 # ARM performance benchmark
 
+The personal learning build generated a valid Algebra equation on-device from a 79-token prompt. ExecuTorch reported 26 output tokens and 0.442 s to the first token. One cold launch after force-stop took 1.035 s in Activity Manager. The figures below refer to the earlier Aurora Tutor baseline.
+
 Physical realme P4 Pro 5G (RMX5116), Android 16, ARM64, SM7750, measured on 25 November 2026. The device had 11,512,612 KiB of total RAM and a 1280 × 2800 display. Network state was airplane mode on, Wi-Fi off and mobile data off. The model is the [verified Llama 3.2 1B Instruct SpinQuant PTE](../models/spinquant-manifest.json). APK identity is in [SHA256SUMS](../submission/SHA256SUMS.txt).
 
 | Measure | Observed |

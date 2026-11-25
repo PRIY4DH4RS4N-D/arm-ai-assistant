@@ -1,5 +1,7 @@
 # Aurora architecture
 
+The personal learning platform adds `PlatformRepository` and a Room database scoped by local profile ID. The topic workspace holds saved lessons, drafts, attempts, study time, notes and revision evidence. `LearningPlatform` coordinates profile switching and routes generation through the existing `LocalTutor`, which serializes access to the device model. See the [data model](DATA_MODEL.md), [learning engine](LEARNING_ENGINE.md) and [quiz engine](QUIZ_ENGINE.md).
+
 ```mermaid
 flowchart TD
   UI[Jetpack Compose Tutor] --> VM[TutorViewModel]

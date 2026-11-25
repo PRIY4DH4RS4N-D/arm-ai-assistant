@@ -245,7 +245,16 @@ data class TutorRequest(
     val learningStyle: String,
     val conversationHistory: List<TutorConversationMessage> = emptyList(),
     val recentMistake: String? = null,
-    val curriculumExcerpt: String? = null
+    val curriculumExcerpt: String? = null,
+    val personalization: TutorPersonalization = TutorPersonalization()
+)
+
+data class TutorPersonalization(
+    val assistant: String = "Aurora",
+    val language: String = "English",
+    val note: String? = null,
+    val assessedMastery: Int? = null,
+    val weakness: String? = null
 )
 
 data class TutorResponse(

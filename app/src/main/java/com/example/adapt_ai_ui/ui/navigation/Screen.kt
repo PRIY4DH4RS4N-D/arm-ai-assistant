@@ -8,5 +8,9 @@ sealed class Screen(val route: String, val title: String) {
     object Lesson : Screen("lesson", "Lesson")
     object Practice : Screen("practice", "Practice")
     object Explore : Screen("explore", "Explore Domains")
+    object Archive : Screen("archive", "Original courses")
+    object Workspace : Screen("workspace", "Topic")
+    object Preferences : Screen("preferences", "Learning preferences")
+    object Progress : Screen("progress", "Progress")
     object Onboarding : Screen("onboarding", "Personalized Onboarding")
 }

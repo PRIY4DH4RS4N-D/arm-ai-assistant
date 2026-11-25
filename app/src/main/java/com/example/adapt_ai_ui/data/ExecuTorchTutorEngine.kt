@@ -31,7 +31,9 @@ class ExecuTorchTutorEngine(private val runtime: LocalTutor) : TutorEngine {
             followUpPrompts = getSuggestedPrompts(request.domainId, request.topicTitle, request.mode),
             executionModelLabel = AURORA_RUNTIME,
             inferenceTimeMs = elapsed,
-            sourceLabel = request.curriculumExcerpt?.let { SampleData.sampleLesson.title }
+            sourceLabel = request.curriculumExcerpt?.let {
+                if (request.personalization.note != null) "Your notes" else SampleData.sampleLesson.title
+            }
         )
     }
 }
@@ -53,6 +55,8 @@ internal fun buildLlamaPrompt(request: TutorRequest): String {
         "<|start_header_id|>$role<|end_header_id|>\n\n$text<|eot_id|>"
 
     val context = buildString {
+        append("Reply in ${request.personalization.language.bounded(24)}. ")
+        request.personalization.assessedMastery?.let { append("Measured mastery $it%. ") }
         append("Subject ${request.domainTitle.bounded(65)}. Lesson ${request.topicTitle.bounded(65)}. ")
         append("${request.skillLevel.label}. Goal ${request.goal.bounded(55)}. ")
         append("Style ${request.learningStyle.bounded(35)}. ")
@@ -60,7 +64,7 @@ internal fun buildLlamaPrompt(request: TutorRequest): String {
         request.curriculumExcerpt?.let { append("Local lesson excerpt ${it.bounded(145)}.") }
     }
     return buildString {
-        append(turn("system", "You are Aurora, an offline learning tutor. $instruction $context"))
+        append(turn("system", "You are ${request.personalization.assistant.bounded(30)}, an offline learning tutor. $instruction $context"))
         request.conversationHistory.takeLast(2).forEach {
             append(turn(if (it.isTutor) "assistant" else "user", it.content.bounded(110)))
         }

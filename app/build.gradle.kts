@@ -38,6 +38,9 @@ android {
 }
 
 dependencies {
+    implementation("androidx.room:room-runtime:2.8.4")
+    annotationProcessor("androidx.room:room-compiler:2.8.4")
+    implementation("com.google.code.gson:gson:2.13.2")
     implementation("org.pytorch:executorch-android:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
