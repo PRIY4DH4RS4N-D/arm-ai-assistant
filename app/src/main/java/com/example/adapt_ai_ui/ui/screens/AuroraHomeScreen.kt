@@ -132,7 +132,7 @@ fun HomeScreen(
     BoxWithConstraints(
         modifier.fillMaxSize().background(backdrop).statusBarsPadding()
     ) {
-        val artworkSize = (maxHeight * 0.48f).coerceIn(170.dp, 340.dp)
+        val artworkSize = (maxHeight * 0.36f).coerceIn(128.dp, 285.dp)
         val compact = maxHeight < 425.dp
         Box(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(240.dp).background(
@@ -219,7 +219,7 @@ fun HomeScreen(
                 }
                 session?.topic?.let { topic ->
                     TextButton(onNavigateToLesson, Modifier.align(Alignment.CenterHorizontally)) {
-                        Text("Continue ${topic.name} ? ${session.preferences.minutes} min/day")
+                        Text("Continue ${topic.name} \u00b7 ${session.preferences.minutes} min/day")
                     }
                 }
             }

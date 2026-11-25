@@ -6,6 +6,7 @@
 - Added offline subject search, multiple interests, custom topics and editable study goals and schedules.
 - Added a topic workspace for local AI lessons, model-generated assessments, deterministic scoring, mastery, revision and note import.
 - Refreshed Home and added profile and topic navigation inspired by the supplied Aurora mockup.
+- Corrected welcome-screen text contrast and fit the Home greeting and orb on the connected phone.
 
 - Added a minimal Aurora Home with a lifecycle-aware Canvas orb, glass text input and on-device speech capability detection.
 - Updated shared dark and light colors, animated bottom-tab selection and added an editable learner name.

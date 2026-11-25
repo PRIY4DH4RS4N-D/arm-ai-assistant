@@ -1,5 +1,15 @@
 # Aurora phone demonstration
 
+## Personal learning platform take
+
+- Start at Aurora Home with the local learner's active topic.
+- Open Profile, switch to the local profile selector, and reopen the demo learner.
+- Explore Subjects, open Mathematics → Algebra, and inspect the saved study goal and weekly schedule.
+- Ask the offline Tutor how to isolate a variable and watch its local response.
+- Generate an Algebra quiz, submit an answer, and inspect the score and mastery evidence.
+
+The previous PS4 take and its capture notes appear below.
+
 | Time | Phone action |
 | --- | --- |
 | 0:00–0:10 | Open Aurora Home. Introduce PS4 and the offline learning goal. |

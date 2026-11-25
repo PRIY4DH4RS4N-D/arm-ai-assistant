@@ -74,7 +74,9 @@ class MainActivity : ComponentActivity() {
                         Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                             androidx.compose.material3.CircularProgressIndicator()
                         }
-                    } else if (profile == null) WelcomePlatform(platform)
+                    } else if (profile == null) {
+                        androidx.compose.material3.Surface(Modifier.fillMaxSize()) { WelcomePlatform(platform) }
+                    }
                     else key(profile.id) { AdaptAppRoot(tutorViewModel, platform) }
                 }
             }
