@@ -243,7 +243,9 @@ data class TutorRequest(
     val goal: String,
     val skillLevel: DifficultyLevel,
     val learningStyle: String,
-    val conversationHistory: List<TutorConversationMessage> = emptyList()
+    val conversationHistory: List<TutorConversationMessage> = emptyList(),
+    val recentMistake: String? = null,
+    val curriculumExcerpt: String? = null
 )
 
 data class TutorResponse(
@@ -258,7 +260,8 @@ data class TutorResponse(
     val followUpPrompts: List<String> = emptyList(),
     val practiceQuestion: String? = null,
     val executionModelLabel: String = "Prototype Engine (Simulated On-Device Runtime)",
-    val inferenceTimeMs: Long = 380L
+    val inferenceTimeMs: Long = 380L,
+    val sourceLabel: String? = null
 )
 
 data class TutorConversationMessage(

@@ -9,6 +9,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,7 @@ import com.example.adapt_ai_ui.data.LearningDomain
 import com.example.adapt_ai_ui.data.PracticeMode
 import com.example.adapt_ai_ui.data.SampleData
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
+import androidx.lifecycle.ViewModelProvider
 import com.example.adapt_ai_ui.ui.components.AdaptBottomNav
 import com.example.adapt_ai_ui.data.persistence.AdaptPersistence
 import com.example.adapt_ai_ui.ui.navigation.Screen
@@ -50,13 +52,14 @@ class MainActivity : ComponentActivity() {
 
         // Initialize persistent storage before UI composition
         AdaptPersistence.init(this)
+        val tutorViewModel = ViewModelProvider(this)[TutorViewModel::class.java]
 
         val themeManager = ThemeManager(this)
 
         setContent {
             CompositionLocalProvider(LocalThemeManager provides themeManager) {
                 ADAPTAIUITheme(themeMode = themeManager.currentThemeMode) {
-                    AdaptAppRoot()
+                    AdaptAppRoot(tutorViewModel)
                 }
             }
         }
@@ -70,7 +73,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AdaptAppRoot() {
+fun AdaptAppRoot(tutorViewModel: TutorViewModel) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
     val backStack = remember { mutableStateListOf<Screen>() }
 
@@ -141,8 +144,9 @@ fun AdaptAppRoot() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
+                .imePadding()
         ) {
             Crossfade(
                 targetState = currentScreen,
@@ -168,6 +172,10 @@ fun AdaptAppRoot() {
                         onNavigateBack = { navigateBack(fallback = Screen.Home) },
                         onNavigateToLesson = { navigateTo(Screen.Lesson) },
                         onNavigateToExplore = { navigateTo(Screen.Explore) },
+                        onPractice = { mode ->
+                            practiceInitialMode = mode
+                            navigateTo(Screen.Practice)
+                        },
                         onAskTutor = { prompt ->
                             tutorInitialPrompt = prompt
                             navigateTo(Screen.Tutor)
@@ -207,6 +215,9 @@ fun AdaptAppRoot() {
 
                     Screen.Tutor -> TutorScreen(
                         initialPrompt = tutorInitialPrompt,
+                        viewModel = tutorViewModel,
+                        onInitialPromptConsumed = { tutorInitialPrompt = null },
+                        onOpenModelManager = { navigateTo(Screen.Profile) },
                         onNavigateBack = if (backStack.isNotEmpty()) {
                             { navigateBack(fallback = Screen.Home) }
                         } else null

@@ -32,14 +32,23 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
 class AdaptAiUnitTest {
 
+    private lateinit var previousEngine: com.example.adapt_ai_ui.data.TutorEngine
+
     @Before
     fun setUp() {
+        previousEngine = TutorRepository.setEngineForTest(PrototypeTutorEngine())
         SampleData.resetToDefaultTrack()
+    }
+
+    @After
+    fun restoreTutorEngine() {
+        TutorRepository.setEngineForTest(previousEngine)
     }
 
     @Test
@@ -1342,6 +1351,8 @@ class AdaptAiUnitTest {
 
     @Test
     fun profile_masteryConsistency_reflectsAuthenticAssessmentRecords() {
+        val question = AdaptiveLearningEngine.questionBank.first()
+        AdaptiveLearningEngine.submitAnswer(question, question.correctIndex)
         val topicStats = AdaptiveLearningEngine.topicStats
         val totalAttempts = topicStats.values.sumOf { it.totalAttempts }
         val totalCorrect = topicStats.values.sumOf { it.correctAttempts }
@@ -1374,6 +1385,8 @@ class AdaptAiUnitTest {
 
     @Test
     fun profile_revisionHistory_reflectsMistakeNotebookState() {
+        val question = AdaptiveLearningEngine.questionBank.first()
+        AdaptiveLearningEngine.submitAnswer(question, (question.correctIndex + 1) % question.options.size)
         val mistakes = AdaptiveLearningEngine.mistakeNotebook
         assertFalse(mistakes.isEmpty())
 

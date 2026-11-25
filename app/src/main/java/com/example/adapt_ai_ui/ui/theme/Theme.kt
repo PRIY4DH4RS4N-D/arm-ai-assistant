@@ -56,10 +56,10 @@ val DarkSemanticColors = AdaptSemanticColors(
     textPrimary = ObsidianTextPrimary,
     textSecondary = ObsidianTextSecondary,
     textMuted = ObsidianTextMuted,
-    primaryAccent = VioletPrimaryDark,
-    primaryAccentHover = Color(0xFF8B7CF6),
-    primaryAccentContainer = VioletContainerDark,
-    onPrimaryAccentContainer = VioletOnContainerDark,
+    primaryAccent = AuroraBlueDark,
+    primaryAccentHover = Color(0xFF58A6FF),
+    primaryAccentContainer = AuroraBlueContainerDark,
+    onPrimaryAccentContainer = AuroraOnBlueContainerDark,
     secondaryAccent = TealSecondaryDark,
     secondaryAccentContainer = TealContainerDark,
     onSecondaryAccentContainer = TealOnContainerDark,
@@ -83,10 +83,10 @@ val LightSemanticColors = AdaptSemanticColors(
     textPrimary = PearlTextPrimary,
     textSecondary = PearlTextSecondary,
     textMuted = PearlTextMuted,
-    primaryAccent = VioletPrimaryLight,
-    primaryAccentHover = Color(0xFF5B47CC),
-    primaryAccentContainer = VioletContainerLight,
-    onPrimaryAccentContainer = VioletOnContainerLight,
+    primaryAccent = AuroraBlueLight,
+    primaryAccentHover = Color(0xFF184693),
+    primaryAccentContainer = AuroraBlueContainerLight,
+    onPrimaryAccentContainer = AuroraOnBlueContainerLight,
     secondaryAccent = TealSecondaryLight,
     secondaryAccentContainer = TealContainerLight,
     onSecondaryAccentContainer = TealOnContainerLight,
@@ -106,10 +106,10 @@ val LocalAdaptColors = staticCompositionLocalOf { DarkSemanticColors }
 
 // Material 3 Color Schemes aligned with Semantic Tokens
 private val DarkColorScheme = darkColorScheme(
-    primary = VioletPrimaryDark,
-    onPrimary = Color.White,
-    primaryContainer = VioletContainerDark,
-    onPrimaryContainer = VioletOnContainerDark,
+    primary = AuroraBlueDark,
+    onPrimary = Color(0xFF081931),
+    primaryContainer = AuroraBlueContainerDark,
+    onPrimaryContainer = AuroraOnBlueContainerDark,
 
     secondary = TealSecondaryDark,
     onSecondary = Color(0xFF042F2E),
@@ -138,10 +138,10 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = VioletPrimaryLight,
+    primary = AuroraBlueLight,
     onPrimary = Color.White,
-    primaryContainer = VioletContainerLight,
-    onPrimaryContainer = VioletOnContainerLight,
+    primaryContainer = AuroraBlueContainerLight,
+    onPrimaryContainer = AuroraOnBlueContainerLight,
 
     secondary = TealSecondaryLight,
     onSecondary = Color.White,

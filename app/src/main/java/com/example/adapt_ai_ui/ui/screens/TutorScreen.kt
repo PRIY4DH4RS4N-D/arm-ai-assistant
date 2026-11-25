@@ -37,6 +37,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,7 +66,10 @@ import com.example.adapt_ai_ui.data.SampleData
 import com.example.adapt_ai_ui.data.TutorConversationMessage
 import com.example.adapt_ai_ui.data.TutorMode
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
+import com.example.adapt_ai_ui.TutorViewModel
 import com.example.adapt_ai_ui.data.TutorRepository
+import com.example.adapt_ai_ui.inference.ModelState
+import com.example.adapt_ai_ui.ui.components.rememberOfflineNarrator
 import com.example.adapt_ai_ui.data.TutorResponse
 import com.example.adapt_ai_ui.ui.components.AdaptGlassSurface
 import com.example.adapt_ai_ui.ui.components.AdaptIcons
@@ -80,13 +84,19 @@ import kotlinx.coroutines.launch
 fun TutorScreen(
     initialPrompt: TutorQuickPrompt? = null,
     onNavigateBack: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInitialPromptConsumed: () -> Unit = {},
+    onOpenModelManager: () -> Unit = {},
+    viewModel: TutorViewModel? = null
 ) {
     val learner = SampleData.learnerProfile
     val currentModule = SampleData.currentModule
-    val activeMode = TutorRepository.activeMode
-    val isGenerating = TutorRepository.isGenerating
-    val messages = TutorRepository.conversationMessages
+    val activeMode = viewModel?.mode ?: TutorRepository.activeMode
+    val isGenerating = viewModel?.isGenerating ?: false
+    val messages = viewModel?.messages ?: TutorRepository.conversationMessages
+    val modelState = viewModel?.runtime?.state?.collectAsState()?.value ?: ModelState.MISSING
+    val draft = viewModel?.draft.orEmpty()
+    val narrator = rememberOfflineNarrator()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -96,56 +106,26 @@ fun TutorScreen(
     var textInput by remember { mutableStateOf("") }
     var showClearDialog by remember { mutableStateOf(false) }
 
-    // Initialize or auto-submit contextual prompt
-    LaunchedEffect(initialPrompt, learner.activeDomainId, currentModule.title) {
+    LaunchedEffect(initialPrompt) {
+        TutorRepository.initializeSession(learner.name, learner.activeDomainTitle, currentModule.title)
         if (initialPrompt != null) {
-            if (messages.isEmpty()) {
-                TutorRepository.initializeSession(
-                    learnerName = learner.name,
-                    domainTitle = learner.activeDomainTitle,
-                    currentTopic = currentModule.title,
-                    initialPrompt = initialPrompt
-                )
-            } else {
-                TutorRepository.sendUserQuery(
-                    query = initialPrompt.prompt,
-                    domainId = learner.activeDomainId,
-                    domainTitle = learner.activeDomainTitle,
-                    currentTopic = currentModule.title,
-                    goal = learner.activeGoal,
-                    skillLevel = learner.skillLevel,
-                    learningStyle = learner.preferredLearningStyle
-                )
-            }
-        } else if (messages.isEmpty()) {
-            TutorRepository.initializeSession(
-                learnerName = learner.name,
-                domainTitle = learner.activeDomainTitle,
-                currentTopic = currentModule.title,
-                initialPrompt = null
-            )
+            if (isGenerating) textInput = initialPrompt.prompt
+            else viewModel?.send(initialPrompt.prompt, learner, currentModule.title)
+            onInitialPromptConsumed()
         }
     }
 
     // Scroll to latest message on update
     LaunchedEffect(messages.size, isGenerating) {
         if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+            listState.animateScrollToItem(messages.size - if (isGenerating) 0 else 1)
         }
     }
 
     fun submitQuery(queryText: String) {
         if (queryText.isBlank() || isGenerating) return
         textInput = ""
-        TutorRepository.sendUserQuery(
-            query = queryText.trim(),
-            domainId = learner.activeDomainId,
-            domainTitle = learner.activeDomainTitle,
-            currentTopic = currentModule.title,
-            goal = learner.activeGoal,
-            skillLevel = learner.skillLevel,
-            learningStyle = learner.preferredLearningStyle
-        )
+        viewModel?.send(queryText.trim(), learner, currentModule.title)
     }
 
     Column(
@@ -223,7 +203,7 @@ fun TutorScreen(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "ON-DEVICE READY",
+                                text = modelState.label,
                                 style = AdaptTheme.typography.labelSmall.copy(
                                     fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Bold,
@@ -258,6 +238,12 @@ fun TutorScreen(
                     tint = AdaptTheme.colors.textMuted,
                     modifier = Modifier.size(16.dp)
                 )
+            }
+        }
+
+        if (modelState == ModelState.MISSING || modelState == ModelState.ERROR) {
+            TextButton(onClick = onOpenModelManager, modifier = Modifier.padding(horizontal = 12.dp)) {
+                Text("Manage offline model")
             }
         }
 
@@ -298,7 +284,7 @@ fun TutorScreen(
                             color = borderColor,
                             shape = RoundedCornerShape(AdaptTheme.radius.full)
                         )
-                        .clickable(role = Role.RadioButton) {
+                        .clickable(enabled = !isGenerating, role = Role.RadioButton) {
                             if (mode != activeMode) {
                                 TutorRepository.setMode(
                                     mode = mode,
@@ -360,26 +346,29 @@ fun TutorScreen(
                             },
                             onFollowUpClick = { prompt -> submitQuery(prompt) },
                             onRetryClick = {
-                                TutorRepository.sendUserQuery(
-                                    query = "Retry explanation for ${currentModule.title}",
-                                    domainId = learner.activeDomainId,
-                                    domainTitle = learner.activeDomainTitle,
-                                    currentTopic = currentModule.title,
-                                    goal = learner.activeGoal,
-                                    skillLevel = learner.skillLevel,
-                                    learningStyle = learner.preferredLearningStyle
-                                )
-                            }
+                                if (msg == messages.lastOrNull()) viewModel?.retry()
+                            },
+                            onSpeak = if (msg.structuredPayload?.executionModelLabel?.startsWith("Llama 3.2") == true) {
+                                { narrator.speak(msg.content) }
+                            } else null,
+                            canRegenerate = !isGenerating && msg == messages.lastOrNull()
                         )
                     } else {
                         UserMessageBubble(message = msg)
                     }
                 }
 
-                // Thinking / Simulated Inference Indicator
                 if (isGenerating) {
-                    item {
-                        GeneratingIndicator()
+                    item(key = "tutor_stream") {
+                        Column {
+                            if (draft.isBlank()) GeneratingIndicator()
+                            else Text(
+                                draft, color = AdaptTheme.colors.textPrimary,
+                                style = AdaptTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                            TextButton(onClick = { viewModel?.stop() }) { Text("Stop generation") }
+                        }
                     }
                 }
             }
@@ -390,6 +379,13 @@ fun TutorScreen(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 12.dp)
             )
+        }
+
+        narrator.status?.let {
+            Text(it, modifier = Modifier.padding(horizontal = 20.dp), color = AdaptTheme.colors.textSecondary)
+        }
+        if (narrator.speaking) {
+            TextButton(onClick = narrator.stop, modifier = Modifier.padding(horizontal = 12.dp)) { Text("Stop reading") }
         }
 
         // ====================================================================
@@ -639,7 +635,9 @@ private fun TutorAssistantCard(
     message: TutorConversationMessage,
     onCopyText: (String) -> Unit,
     onFollowUpClick: (String) -> Unit,
-    onRetryClick: () -> Unit
+    onRetryClick: () -> Unit,
+    onSpeak: (() -> Unit)? = null,
+    canRegenerate: Boolean = false
 ) {
     val payload = message.structuredPayload
 
@@ -977,16 +975,27 @@ private fun TutorAssistantCard(
                 }
             }
 
-            // Honest Runtime Tag
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${payload?.executionModelLabel ?: "Prototype Heuristic Engine"} • ${payload?.inferenceTimeMs ?: 380}ms (Simulated)",
-                style = AdaptTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                color = AdaptTheme.colors.textMuted
-            )
+            if (payload != null && payload.executionModelLabel.startsWith("Llama 3.2")) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${payload.executionModelLabel} ? ${payload.inferenceTimeMs} ms",
+                    style = AdaptTheme.typography.labelSmall,
+                    color = AdaptTheme.colors.textMuted
+                )
+                payload.sourceLabel?.let {
+                    Text("Local source ? $it", style = AdaptTheme.typography.labelSmall, color = AdaptTheme.colors.textMuted)
+                }
+                Row {
+                    onSpeak?.let { TextButton(onClick = it) { Text("Read aloud") } }
+                    if (canRegenerate) TextButton(onClick = onRetryClick) { Text("Regenerate") }
+                }
+            } else if (payload?.executionModelLabel?.contains("Prototype") == true &&
+                message.id.startsWith("tutor_")) {
+                Text("Saved prototype response", style = AdaptTheme.typography.labelSmall, color = AdaptTheme.colors.textMuted)
+            }
 
             // Error Retry Action
-            if (message.isError) {
+            if (message.isError && canRegenerate) {
                 Spacer(modifier = Modifier.height(10.dp))
                 AdaptSecondaryButton(
                     text = "Retry Generation",

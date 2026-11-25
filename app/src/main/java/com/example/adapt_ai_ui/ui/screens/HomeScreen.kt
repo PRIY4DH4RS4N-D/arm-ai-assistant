@@ -75,7 +75,7 @@ import com.example.adapt_ai_ui.ui.theme.ThemeMode
  * 6. Conversational AI Tutor Dock: Socratic query portal with topic pills and simulated on-device inference prompt.
  */
 @Composable
-fun HomeScreen(
+internal fun LearningOverviewScreen(
     onNavigateToPathway: () -> Unit,
     onNavigateToLesson: () -> Unit,
     onNavigateToPractice: (PracticeMode) -> Unit,

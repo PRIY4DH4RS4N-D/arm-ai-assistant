@@ -7,18 +7,18 @@ import androidx.compose.ui.graphics.Color
 // ============================================================================
 
 // Dark Theme: Obsidian Canvas & Surfaces
-val ObsidianBackground = Color(0xFF0B0D12)
-val ObsidianSurface = Color(0xFF151923)
-val ObsidianRaisedSurface = Color(0xFF1C222D)
-val ObsidianElevated = Color(0xFF242B38)
+val ObsidianBackground = Color(0xFF02040A)
+val ObsidianSurface = Color(0xFF101728)
+val ObsidianRaisedSurface = Color(0xFF17213A)
+val ObsidianElevated = Color(0xFF1E2B46)
 val ObsidianBorder = Color(0xFF2B3342)
 val ObsidianBorderSubtle = Color(0xFF1F2633)
-val ObsidianTextPrimary = Color(0xFFF2F4F8)
-val ObsidianTextSecondary = Color(0xFFA2AAB8)
-val ObsidianTextMuted = Color(0xFF6B7280)
+val ObsidianTextPrimary = Color(0xFFF5F7FB)
+val ObsidianTextSecondary = Color(0xFFA5AFBE)
+val ObsidianTextMuted = Color(0xFF8C99AD)
 
 // Light Theme: Soft Pearl Canvas & Surfaces
-val PearlBackground = Color(0xFFF4F5F8)
+val PearlBackground = Color(0xFFF8FAFF)
 val PearlSurface = Color(0xFFFFFFFF)
 val PearlRaisedSurface = Color(0xFFECEFF4)
 val PearlElevated = Color(0xFFE2E6EE)
@@ -27,6 +27,13 @@ val PearlBorderSubtle = Color(0xFFE5E9F0)
 val PearlTextPrimary = Color(0xFF171B24)
 val PearlTextSecondary = Color(0xFF626B7A)
 val PearlTextMuted = Color(0xFF94A3B8)
+
+internal val AuroraBlueDark = Color(0xFF77BDFF)
+internal val AuroraBlueLight = Color(0xFF2459BF)
+internal val AuroraBlueContainerDark = Color(0xFF172C53)
+internal val AuroraBlueContainerLight = Color(0xFFE3EEFF)
+internal val AuroraOnBlueContainerDark = Color(0xFFDBECFF)
+internal val AuroraOnBlueContainerLight = Color(0xFF142F62)
 
 // Brand Core Accents: Muted Violet (Primary) & Restrained Teal (Secondary)
 val VioletPrimaryDark = Color(0xFFA99AFB)          // Dark theme primary accent
@@ -52,8 +59,8 @@ val StatusErrorDark = Color(0xFFF87171)
 val StatusErrorLight = Color(0xFFDC2626)
 
 // Liquid Glass Translucency Tokens (Restrained, no expensive runtime blur required)
-val GlassSurfaceDark = Color(0xD9151923)           // 85% opacity obsidian
-val GlassBorderDark = Color(0x33A99AFB)            // 20% violet specular reflection
+val GlassSurfaceDark = Color(0xD9101728)           // 85% opacity obsidian
+val GlassBorderDark = Color(0x3342D7FF)            // 20% violet specular reflection
 val GlassHighlightDark = Color(0x1AFFFFFF)         // 10% white top specular rim
 
 val GlassSurfaceLight = Color(0xE6FFFFFF)          // 90% opacity soft pearl

@@ -183,7 +183,7 @@ fun PracticeScreen(
                             }
                         },
                         onSubmitAnswer = {
-                            selectedOptionIndex?.let { optionIndex ->
+                            selectedOptionIndex?.takeUnless { currentQuestion.id in submissions }?.let { optionIndex ->
                                 val sub = AdaptiveLearningEngine.submitAnswer(currentQuestion, optionIndex)
                                 submissions[currentQuestion.id] = sub
                             }

@@ -306,13 +306,13 @@ class AdaptPersistenceRepository(
     }
 
     private fun loadInitialTopicStats(): Map<String, TopicCompetency> {
-        val raw = storage.read(KEY_PRACTICE) ?: return defaultTopicStats()
-        return AdaptJsonSerializers.deserializeTopicStats(raw) ?: defaultTopicStats()
+        val raw = storage.read(KEY_PRACTICE) ?: return emptyMap()
+        return AdaptJsonSerializers.deserializeTopicStats(raw) ?: emptyMap()
     }
 
     private fun loadInitialMistakes(): List<MistakeRecord> {
-        val raw = storage.read(KEY_PRACTICE) ?: return defaultMistakes()
-        return AdaptJsonSerializers.deserializeMistakeNotebook(raw) ?: defaultMistakes()
+        val raw = storage.read(KEY_PRACTICE) ?: return emptyList()
+        return AdaptJsonSerializers.deserializeMistakeNotebook(raw) ?: emptyList()
     }
 
     private fun loadInitialTutorMode(): TutorMode {
@@ -332,13 +332,13 @@ class AdaptPersistenceRepository(
 
     // Defaults
     private fun defaultProfile() = LearnerProfile(
-        name = "Aryan",
+        name = "learner",
         greeting = "Good morning",
-        streakDays = 6,
-        dailyMinutesSpent = 25,
+        streakDays = 0,
+        dailyMinutesSpent = 0,
         dailyMinutesGoal = 35,
-        weeklyHoursCompleted = 3.8f,
-        masteryScorePercent = 82,
+        weeklyHoursCompleted = 0f,
+        masteryScorePercent = 0,
         activeDomainId = "ai_ml",
         activeDomainTitle = "Artificial Intelligence & ML",
         activeGoal = "Build Real Edge AI Projects",
@@ -352,7 +352,7 @@ class AdaptPersistenceRepository(
         summary = "Learn how converting 32-bit floating point weights into 8-bit integers accelerates edge neural networks while reducing memory bandwidth.",
         trackName = "Edge AI Systems",
         estimatedMinutes = 12,
-        currentStep = 3,
+        currentStep = 1,
         totalSteps = 4,
         difficulty = DifficultyLevel.INTERMEDIATE
     )
@@ -368,40 +368,12 @@ class AdaptPersistenceRepository(
         id = "goal_today",
         title = "Quantization Foundations",
         targetDescription = "Complete 2 practical lessons & 1 concept quiz",
-        current = 2,
+        current = 0,
         target = 3,
         isCompleted = false
     )
 
-    private fun defaultTopicStats() = mapOf(
-        "Memory Hierarchy" to TopicCompetency("Memory Hierarchy", 2, 3),
-        "Quantization Math" to TopicCompetency("Quantization Math", 1, 2),
-        "ARM NPU Execution" to TopicCompetency("ARM NPU Execution", 1, 2),
-        "Precision Scaling" to TopicCompetency("Precision Scaling", 0, 1)
-    )
 
-    private fun defaultMistakes() = listOf(
-        MistakeRecord(
-            question = PracticeQuestionItem(
-                id = "q_prior_fp32",
-                topicTag = "Precision Scaling",
-                question = "What is the primary trade-off when using Symmetric Quantization (Z = 0) on asymmetric activation distributions?",
-                options = listOf(
-                    "A) Memory footprint doubles from 8 bits to 16 bits.",
-                    "B) Suboptimal integer dynamic range utilization, which can degrade accuracy for skewed distributions like ReLU.",
-                    "C) The model can no longer be deployed on ARM Cortex-M microcontrollers.",
-                    "D) The compiler refuses to emit integer MAC instructions."
-                ),
-                correctIndex = 1,
-                explanation = "Symmetric quantization forces zero to align with the midpoint, wasting half of the integer range when activations are strictly positive (such as after a ReLU function).",
-                difficulty = DifficultyLevel.INTERMEDIATE
-            ),
-            lastSelectedOptionIndex = 0,
-            mistakeCount = 1,
-            nextRevisionDays = 1,
-            isResolved = false
-        )
-    )
 }
 
 // ============================================================================
@@ -433,13 +405,13 @@ object AdaptJsonSerializers {
         val obj = AdaptJson.parseObject(json) ?: return null
         return try {
             LearnerProfile(
-                name = obj.getString("name", "Aryan"),
+                name = obj.getString("name", "learner"),
                 greeting = obj.getString("greeting", "Good morning"),
-                streakDays = obj.getInt("streakDays", 6),
-                dailyMinutesSpent = obj.getInt("dailyMinutesSpent", 25),
+                streakDays = obj.getInt("streakDays", 0),
+                dailyMinutesSpent = obj.getInt("dailyMinutesSpent", 0),
                 dailyMinutesGoal = obj.getInt("dailyMinutesGoal", 35),
-                weeklyHoursCompleted = obj.getFloat("weeklyHoursCompleted", 3.8f),
-                masteryScorePercent = obj.getInt("masteryScorePercent", 82),
+                weeklyHoursCompleted = obj.getFloat("weeklyHoursCompleted", 0f),
+                masteryScorePercent = obj.getInt("masteryScorePercent", 0),
                 activeDomainId = obj.getString("activeDomainId", "ai_ml"),
                 activeDomainTitle = obj.getString("activeDomainTitle", "Artificial Intelligence & ML"),
                 activeGoal = obj.getString("activeGoal", "Build Real Edge AI Projects"),
@@ -734,6 +706,7 @@ object AdaptJsonSerializers {
                     put("practiceQuestion", payload.practiceQuestion)
                     put("executionModelLabel", payload.executionModelLabel)
                     put("inferenceTimeMs", payload.inferenceTimeMs)
+                    payload.sourceLabel?.let { put("sourceLabel", it) }
                 }
             } else null
 
@@ -785,7 +758,8 @@ object AdaptJsonSerializers {
                     followUpPrompts = payloadObj.getStringList("followUpPrompts"),
                     practiceQuestion = payloadObj.getString("practiceQuestion").ifBlank { null },
                     executionModelLabel = payloadObj.getString("executionModelLabel", "Prototype Engine (Simulated On-Device Runtime)"),
-                    inferenceTimeMs = payloadObj.getLong("inferenceTimeMs", 380L)
+                    inferenceTimeMs = payloadObj.getLong("inferenceTimeMs", 380L),
+                    sourceLabel = payloadObj.getString("sourceLabel", "").ifBlank { null }
                 )
             } else null
 
@@ -866,7 +840,8 @@ class PersistenceWriteCoordinator(
 
     suspend fun flush() {
         while (true) {
-            val jobs = inFlightJobs.toList()
+            // Avoid a size-based collection copy while completion callbacks remove jobs.
+            val jobs = buildList { inFlightJobs.forEach { add(it) } }
             if (jobs.isEmpty()) break
             jobs.joinAll()
         }

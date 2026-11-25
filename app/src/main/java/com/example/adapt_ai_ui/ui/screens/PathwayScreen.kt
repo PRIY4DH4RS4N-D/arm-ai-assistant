@@ -38,6 +38,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.adapt_ai_ui.data.MilestoneStatus
+import com.example.adapt_ai_ui.data.AdaptiveLearningEngine
+import com.example.adapt_ai_ui.data.PracticeMode
+import androidx.compose.material3.TextButton
 import com.example.adapt_ai_ui.data.PathwayNode
 import com.example.adapt_ai_ui.data.SampleData
 import com.example.adapt_ai_ui.data.TutorQuickPrompt
@@ -67,7 +70,8 @@ fun PathwayScreen(
     onNavigateToLesson: () -> Unit,
     onNavigateToExplore: () -> Unit = {},
     onAskTutor: (TutorQuickPrompt) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPractice: (PracticeMode) -> Unit = {}
 ) {
     val learner = SampleData.learnerProfile
     val nodes = SampleData.pathwayPreviewNodes
@@ -77,6 +81,12 @@ fun PathwayScreen(
     val completionPercent = if (nodes.isNotEmpty()) (completedCount * 100 / nodes.size) else 0
 
     val activeNode = nodes.firstOrNull { it.status == MilestoneStatus.IN_PROGRESS }
+    val weakest = AdaptiveLearningEngine.topicStats.values
+        .filter { it.totalAttempts > 0 && it.correctAttempts < it.totalAttempts }
+        .minByOrNull { it.masteryPercentage }
+    val revisionCount = AdaptiveLearningEngine.getUnresolvedMistakes().size
+    val plannedLessonMinutes = minOf(learner.dailyMinutesGoal, activeNode?.estimatedMinutes ?: 0)
+    val practiceMinutes = (learner.dailyMinutesGoal - plannedLessonMinutes).coerceAtLeast(0)
 
     LazyColumn(
         modifier = modifier
@@ -99,6 +109,34 @@ fun PathwayScreen(
                 onNavigateBack = onNavigateBack,
                 onNavigateToExplore = onNavigateToExplore
             )
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(learner.activeGoal, style = AdaptTheme.typography.titleMedium, color = AdaptTheme.colors.textPrimary)
+                Text(
+                    "${learner.skillLevel.label} ? ${learner.dailyMinutesGoal} min daily",
+                    style = AdaptTheme.typography.bodySmall, color = AdaptTheme.colors.textSecondary
+                )
+                if (plannedLessonMinutes > 0) {
+                    Text(
+                        "Today ? ${plannedLessonMinutes} min on ${activeNode?.title}" +
+                            if (practiceMinutes > 0) " ? ${practiceMinutes} min practice" else "",
+                        style = AdaptTheme.typography.bodySmall, color = AdaptTheme.colors.textSecondary
+                    )
+                }
+                if (weakest != null) {
+                    Text(
+                        "Review ${weakest.topic}. ${weakest.correctAttempts} of ${weakest.totalAttempts} attempts correct.",
+                        style = AdaptTheme.typography.bodySmall, color = AdaptTheme.colors.textSecondary
+                    )
+                    TextButton(onClick = { onPractice(if (revisionCount > 0) PracticeMode.REVISION else PracticeMode.SESSION) }) {
+                        Text(if (revisionCount > 0) "Open revision queue" else "Practise again")
+                    }
+                } else if (AdaptiveLearningEngine.topicStats.isEmpty()) {
+                    TextButton(onClick = { onPractice(PracticeMode.SESSION) }) { Text("Start a baseline practice set") }
+                }
+            }
         }
 
         // --------------------------------------------------------------------
@@ -141,7 +179,7 @@ fun PathwayScreen(
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "STAGE 1: MODEL COMPRESSION & QUANTIZATION",
+                    text = learner.activeDomainTitle.uppercase(),
                     style = AdaptTheme.typographyExt.overline,
                     color = AdaptTheme.colors.primaryAccent
                 )

@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -60,6 +61,8 @@ import com.example.adapt_ai_ui.ui.components.AdaptProgressIndicator
 import com.example.adapt_ai_ui.ui.components.AdaptSecondaryButton
 import com.example.adapt_ai_ui.ui.components.AdaptSectionHeader
 import com.example.adapt_ai_ui.ui.components.AdaptSurface
+import com.example.adapt_ai_ui.data.TutorRepository
+import com.example.adapt_ai_ui.ui.components.AuroraModelManager
 import com.example.adapt_ai_ui.ui.theme.ADAPTAIUITheme
 import com.example.adapt_ai_ui.ui.theme.AdaptTheme
 import com.example.adapt_ai_ui.ui.theme.LocalThemeManager
@@ -85,6 +88,8 @@ fun ProfileScreen(
     val topicStats = AdaptiveLearningEngine.topicStats
 
     var showResetDialog by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf(false) }
+    var nameInput by remember { mutableStateOf("") }
 
     // Aggregate authentic evaluation metrics
     val totalAttempts = topicStats.values.sumOf { it.totalAttempts }
@@ -101,6 +106,12 @@ fun ProfileScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
+        TutorRepository.runtime?.let { AuroraModelManager(it) }
+        TextButton(onClick = {
+            nameInput = learner.name.takeUnless { it == "learner" }.orEmpty()
+            editName = true
+        }) { Text("Edit learner name") }
+
         // ====================================================================
         // 1. Editorial Masthead
         // ====================================================================
@@ -1362,6 +1373,27 @@ fun ProfileScreen(
     // ========================================================================
     // Reset Confirmation Dialog
     // ========================================================================
+    if (editName) {
+        AlertDialog(
+            onDismissRequest = { editName = false },
+            title = { Text("Learner name") },
+            text = {
+                OutlinedTextField(
+                    value = nameInput, onValueChange = { nameInput = it.take(60) },
+                    label = { Text("Name") }, singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(enabled = nameInput.isNotBlank(), onClick = {
+                    SampleData.learnerProfile = SampleData.learnerProfile.copy(name = nameInput.trim())
+                    AdaptPersistence.scheduleSaveProfile(SampleData.learnerProfile)
+                    editName = false
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { editName = false }) { Text("Cancel") } }
+        )
+    }
+
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },

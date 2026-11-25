@@ -104,6 +104,9 @@ object AdaptiveLearningEngine {
      * updates competencies, and calculates authentic mastery.
      */
     fun submitAnswer(question: PracticeQuestionItem, selectedOptionIndex: Int): QuestionSubmission {
+        require(selectedOptionIndex in question.options.indices && question.correctIndex in question.options.indices) {
+            "An answer must select a valid option from a scored question"
+        }
         val isCorrect = selectedOptionIndex == question.correctIndex
         val submission = QuestionSubmission(
             questionId = question.id,

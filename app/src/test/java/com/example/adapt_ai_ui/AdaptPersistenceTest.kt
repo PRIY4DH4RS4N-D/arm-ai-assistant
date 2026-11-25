@@ -297,8 +297,8 @@ class AdaptPersistenceTest {
         // Should safely fallback to default profile rather than crashing
         val profile = newRepo.profileFlow.value
         assertNotNull(profile)
-        assertEquals("Aryan", profile.name)
-        assertEquals(82, profile.masteryScorePercent)
+        assertEquals("learner", profile.name)
+        assertEquals(0, profile.masteryScorePercent)
     }
 
     @Test
@@ -306,7 +306,7 @@ class AdaptPersistenceTest {
         val emptyBackend = InMemoryStorageBackend()
         val emptyRepo = AdaptPersistenceRepository(emptyBackend, Dispatchers.Unconfined)
 
-        assertEquals("Aryan", emptyRepo.profileFlow.value.name)
+        assertEquals("learner", emptyRepo.profileFlow.value.name)
         assertEquals("INT8 Weight Quantization", emptyRepo.currentModuleFlow.value.title)
         assertEquals(4, emptyRepo.pathwayNodesFlow.value.size)
         assertEquals(TutorMode.SOCRATIC, emptyRepo.activeModeFlow.value)
@@ -521,6 +521,6 @@ class AdaptPersistenceTest {
         // Also check repository loading: does not crash, gracefully loads fallback/defaults
         val testRepo = AdaptPersistenceRepository(fileBackend, Dispatchers.Unconfined)
         assertNotNull(testRepo.profileFlow.value)
-        assertEquals("Aryan", testRepo.profileFlow.value.name)
+        assertEquals("learner", testRepo.profileFlow.value.name)
     }
 }

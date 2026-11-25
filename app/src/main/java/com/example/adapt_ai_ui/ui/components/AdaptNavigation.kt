@@ -1,5 +1,6 @@
 package com.example.adapt_ai_ui.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -95,6 +97,10 @@ fun AdaptBottomNav(
         ) {
             items.forEach { item ->
                 val isSelected = currentScreen == item.screen
+                val selectionColor by animateColorAsState(
+                    if (isSelected) AdaptTheme.colors.primaryAccentContainer else Color.Transparent,
+                    label = "Selected navigation tab"
+                )
 
                 Column(
                     modifier = Modifier
@@ -115,9 +121,7 @@ fun AdaptBottomNav(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(AdaptTheme.radius.full))
-                            .background(
-                                if (isSelected) AdaptTheme.colors.primaryAccentContainer else Color.Transparent
-                            )
+                            .background(selectionColor)
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                         contentAlignment = Alignment.Center
                     ) {

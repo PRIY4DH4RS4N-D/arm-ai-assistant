@@ -25,4 +25,15 @@ local.properties
 *.jks
 *.keystore
 *.key
+/.tools/
+**/build/
+__pycache__/
+*.pte
+*.gguf
+*.pth
+*.safetensors
+tokenizer.model
+*.apk
+!/submission/ADAPT-AI-debug.apk
+adapt-llama-*.zip
 
