@@ -12,6 +12,8 @@ A repeat unit-test run reproduced a race in the existing persistence writer. The
 | `:app:assembleDebug` | PASS |
 | `:app:testDebugUnitTest` | PASS. 116 tests, zero failures or skips |
 | `:app:assembleDebugAndroidTest` | PASS. Compiled, awaiting device execution |
+| `:app:lintDebug` | PASS. Zero errors and 30 warnings |
+| APK signature and contents | PASS. Verified debug signature, ARM64 ExecuTorch library, app backup disabled and no Internet permission |
 | Publisher model byte count and SHA-256 | PASS |
 | Tokenizer byte count, SHA-256 and merge-rank structure | PASS |
 | ExecuTorch 1.0.0 AAR Java API inspection | PASS |
@@ -19,3 +21,5 @@ A repeat unit-test run reproduced a race in the existing persistence writer. The
 | Physical voice input/output, screenshots and demo | BLOCKED. ADB returned no devices. |
 
 The Android navigation instrumentation opens each of the five destinations and returns to the Aurora prompt. On-device model acceptance should include import, first generation, cancellation, retry, context, all five modes and an airplane-mode restart. See [offline verification](OFFLINE_VERIFICATION.md).
+
+The packaged debug APK is 26,879,306 bytes. See [APK checksums](../submission/SHA256SUMS.txt).

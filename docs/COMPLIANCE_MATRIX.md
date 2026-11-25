@@ -16,6 +16,7 @@
 | ExecuTorch runtime | PARTIAL | Pinned 1.0.0 AAR and bridge, native Android acceptance open |
 | Actual Llama PTE | PARTIAL | Candidate present and host hash-verified. Android compatibility open |
 | Model integrity | PASS | Independent byte counts and SHA-256 values match the manifest |
+| Debug APK | PASS | Packaged and signature-verified with ARM64 native libraries only |
 | Tokenizer | PASS | Hash and 128,000 contiguous merge ranks checked. Device pairing awaits generation |
 | Native generation | BLOCKED | No connected ARM phone |
 | Streaming and cancellation | PARTIAL | Callback flow and stop implemented, native device validation open |
