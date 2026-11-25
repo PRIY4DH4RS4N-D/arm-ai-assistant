@@ -6,7 +6,7 @@ EMBER is an on-device personalised learning assistant for the ARM Bharat AI-SoC 
 
 - [Public two-minute phone demonstration](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/download/ember-v1.1.0/EMBER_PS4_DEMO_120S.mp4)
 - [Final project report](submission/EMBER_Final_Project_Report.pdf)
-- [APK downloads](https://github.com/PRIY4DH4RS4N-D/arm-ai-assistant/releases/tag/ember-v1.1.0)
+- [APK build and installation guide](docs/RELEASE_GUIDE.md)
 - [Phone screenshots](docs/ui-verification/) and [completion matrix](docs/COMPLETION_MATRIX.md)
 
 The recording shows the software running on the realme P4 Pro 5G RMX5116, ARM64, Android 16, in airplane mode with Wi-Fi and mobile data off. It shows live local Tutor output, a generated Algebra quiz, deterministic scoring and persisted progress.
